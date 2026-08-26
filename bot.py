@@ -13,8 +13,8 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters, C
 # Токены берутся из переменных окружения Railway
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
-CARD_NUMBER = "1234 5678 9012 3456"
-DONATE_LINK = "https://www.tinkoff.ru/..."
+CARD_NUMBER = "2202208186522703"
+DONATE_LINK = "2202208186522703"
 
 client = OpenAI(api_key=OPENAI_API_KEY)
 
