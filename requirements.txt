@@ -1,5 +1,5 @@
 python-telegram-bot
-edge-tts>=6.1.10
+edge-tts
 aiohttp
 requests
 openai
