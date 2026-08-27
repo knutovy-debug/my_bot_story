@@ -3,7 +3,7 @@ import json
 import asyncio
 import requests
 from datetime import datetime, date
-
+from telegram.request import HTTPXRequest
 from openai import OpenAI
 import edge_tts
 
