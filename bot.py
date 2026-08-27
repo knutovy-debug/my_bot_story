@@ -4,20 +4,24 @@ import asyncio
 import requests
 from datetime import datetime, date
 
-from openai import OpenAI
+# Gemini SDK
+import google.generativeai as genai
+
 import edge_tts
 
 from telegram import Update, ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ConversationHandler, ContextTypes, CallbackQueryHandler
 
-# ======== ТОКЕНЫ (ЗАМЕНИ НА СВОИ) ========
+# ======== ТОКЕНЫ ========
 TELEGRAM_BOT_TOKEN = "8434163956:AAH_cUX7uvV46QX5d6XWUxWSMusHDApsOpU"
-OPENAI_API_KEY = "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"
+OPENAI_API_KEY = "AQ.Ab8RN6KDL_BTvID6zqTHJzsUe9kCJ9F1l7hRqDGtkCQdKC46ow"  # СЮДА ВСТАВЬ СВОЙ КЛЮЧ GEMINI
 
 CARD_NUMBER = "2202208186522703"
 DONATE_LINK = "2202208186522703"
 
-client = OpenAI(api_key=OPENAI_API_KEY)
+# ======== ИНИЦИАЛИЗАЦИЯ GEMINI ========
+genai.configure(api_key=OPENAI_API_KEY)
+gemini_model = genai.GenerativeModel("gemini-1.5-flash")
 
 # ======== БАЗА ДАННЫХ (JSON) ========
 DB_FILE = "stories.json"
@@ -264,8 +268,9 @@ async def story_voice(update, context):
     prompt = f"Напиши {length} сказку для ребёнка 5-7 лет. Герой – {name}, {trait}, {appearance}. Тема: {topic}. Мораль: {moral}."
     await update.message.reply_text("⏳ Генерирую сказку...")
     try:
-        response = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}], max_tokens=600, temperature=0.7)
-        story_text = response.choices[0].message.content.strip()
+        # Генерация через Gemini
+        response = gemini_model.generate_content(prompt)
+        story_text = response.text.strip()
         await update.message.reply_text(f"📖 {story_text}")
     except Exception as e:
         await update.message.reply_text(f"❌ Ошибка генерации: {e}")
