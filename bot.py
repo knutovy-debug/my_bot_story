@@ -319,7 +319,7 @@ async def handle_inline(update, context):
         await query.message.reply_text("🗑️ Сказка удалена.")
 
 # ======== ИНИЦИАЛИЗАЦИЯ БОТА ========
-app = Application.builder().token(TELEGRAM_BOT_TOKEN).http_client(HTTPXRequest(proxy=None)).build()
+app = Application.builder().token("8434163956:AAH_cUX7uvV46QX5d6XWUxWSMusHDApsOpU").build()
 app.add_handler(CommandHandler("start", start))
 app.add_handler(CommandHandler("help", help_command))
 app.add_handler(CommandHandler("donate", donate))
