@@ -11,7 +11,7 @@ from telegram import Update, ReplyKeyboardMarkup, KeyboardButton, InlineKeyboard
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ConversationHandler, ContextTypes, CallbackQueryHandler
 
 # ======== ТОКЕНЫ (ЗАМЕНИ НА СВОИ) ========
-TELEGRAM_BOT_TOKEN = os.environ.get("8434163956:AAH_cUX7uvV46QX5d6XWUxWSMusHDApsOpU")
+TELEGRAM_BOT_TOKEN = "8434163956:AAH_cUX7uvV46QX5d6XWUxWSMusHDApsOpU"
 OPENAI_API_KEY = os.environ.get("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")
 CARD_NUMBER = "2202208186522703"
 DONATE_LINK = "2202208186522703"
