@@ -344,4 +344,4 @@ app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_buttons))
 app.add_handler(CallbackQueryHandler(handle_inline))
 
 # ======== ГОТОВО! ========
-app.run_polling(allowed_updates=Update.ALL_TYPES)
+app.run_polling(allowed_updates=Update.ALL_TYPES)timeout=30
