@@ -10,46 +10,18 @@ import edge_tts
 from telegram import Update, ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ConversationHandler, ContextTypes, CallbackQueryHandler
 
-# Токены берутся из переменных окружения Railway
-TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
+# ======== ТОКЕНЫ (ЗАМЕНИ НА СВОИ) ========
+TELEGRAM_BOT_TOKEN = os.environ.get("8434163956:AAH9UWr6TQCJtEpyvxpK9UwB1S7MT0jrLYo")
+OPENAI_API_KEY = os.environ.get("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")
 CARD_NUMBER = "2202208186522703"
 DONATE_LINK = "2202208186522703"
 
-client = OpenAI(api_key=OPENAI_API_KEY)
-
-async def generate_image(prompt):
-    try:
-        url = f"https://image.pollinations.ai/prompt/{prompt}?width=512&height=512&nologo=true"
-        response = requests.get(url, timeout=30)
-        if response.status_code == 200:
-            return response.content
-    except:
-        pass
-    return None
-
-VOICES = {"Женский": "ru-RU-SvetlanaNeural", "Мужской": "ru-RU-DmitryNeural"}
-LANGUAGES = {"Русский": "ru", "Английский": "en", "Украинский": "uk", "Испанский": "es", "Немецкий": "de", "Французский": "fr", "Итальянский": "it", "Китайский": "zh", "Японский": "ja", "Португальский": "pt"}
-CHARACTER_TRAITS = ["Смелый", "Добрый", "Любопытный", "Весёлый", "Умный"]
-APPEARANCES = ["Рыцарь", "Фея", "Космонавт", "Пират", "Волшебник"]
-
-async def edge_tts_speak(text, voice="ru-RU-SvetlanaNeural"):
-    try:
-        from edge_tts import Communicate
-        communicate = Communicate(text, voice)
-        audio_data = b""
-        async for chunk in communicate.stream():
-            if chunk["type"] == "audio":
-                audio_data += chunk["data"]
-        return audio_data
-    except Exception as e:
-        print(f"Edge TTS ошибка: {e}")
-        return None
-
+# ======== БАЗА ДАННЫХ (JSON) ========
 DB_FILE = "stories.json"
+
 def load_db():
     if not os.path.exists(DB_FILE):
-        return {"stories": [], "user_stats": {}}
+        return {"stories": [], "premium_users": [], "user_stats": {}}
     with open(DB_FILE, "r", encoding="utf-8") as f:
         return json.load(f)
 
@@ -57,19 +29,10 @@ def save_db(db):
     with open(DB_FILE, "w", encoding="utf-8") as f:
         json.dump(db, f, ensure_ascii=False, indent=4)
 
-def save_story(user_id, name, topic, length, moral, language, trait, appearance, story_text):
+# ======== ФУНКЦИИ ПОДПИСКИ ========
+def is_premium(user_id):
     db = load_db()
-    db["stories"].append({"id": len(db["stories"]) + 1, "user_id": user_id, "name": name, "topic": topic, "length": length, "moral": moral, "language": language, "trait": trait, "appearance": appearance, "story_text": story_text, "created_at": datetime.now().isoformat()})
-    save_db(db)
-
-def get_user_stories(user_id):
-    db = load_db()
-    return [s for s in db["stories"] if s["user_id"] == user_id][::-1]
-
-def delete_story(story_id, user_id):
-    db = load_db()
-    db["stories"] = [s for s in db["stories"] if not (s["id"] == story_id and s["user_id"] == user_id)]
-    save_db(db)
+    return str(user_id) in db["premium_users"]
 
 def get_user_daily_count(user_id):
     db = load_db()
@@ -92,8 +55,38 @@ def increment_daily_count(user_id):
     save_db(db)
 
 def can_create_story(user_id):
+    # Если Premium — безлимит
+    if is_premium(user_id):
+        return True
+    # Если бесплатный — лимит 3 в день
     return get_user_daily_count(user_id) < 3
 
+# ======== САМАЯ ВАЖНАЯ ФУНКЦИЯ: РАЗБЛОКИРОВКА ========
+# Используем команду /unlock 123456789
+async def unlock_user(update, context):
+    # Проверяем, что команду вводит владелец (ты сам)
+    admin_id = int(os.environ.get("ADMIN_ID", "0"))  # Вставь свой ID сюда (через @userinfobot)
+    if update.effective_user.id != admin_id:
+        await update.message.reply_text("⛔ Недоступно.")
+        return
+
+    if not context.args:
+        await update.message.reply_text("⚠️ Формат: /unlock 123456789")
+        return
+
+    try:
+        user_id = int(context.args[0])
+        db = load_db()
+        if str(user_id) not in db["premium_users"]:
+            db["premium_users"].append(str(user_id))
+            save_db(db)
+            await update.message.reply_text(f"✅ Разблокирован: {user_id}")
+        else:
+            await update.message.reply_text(f"✅ Уже разблокирован: {user_id}")
+    except Exception as e:
+        await update.message.reply_text(f"❌ Ошибка: {e}")
+
+# ======== КЛАВИАТУРА ========
 def get_main_keyboard():
     keyboard = [[KeyboardButton("📖 Создать сказку")], [KeyboardButton("📚 Мои сказки")], [KeyboardButton("❤️ Поддержать автора")], [KeyboardButton("❓ Помощь")]]
     return ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
@@ -110,15 +103,38 @@ def get_appearance_keyboard():
 def get_voice_keyboard():
     return ReplyKeyboardMarkup([[name] for name in VOICES.keys()], one_time_keyboard=True, resize_keyboard=True)
 
+# ======== НАСТРОЙКИ БОТА (Голоса, языки) ========
+VOICES = {"Женский": "ru-RU-SvetlanaNeural", "Мужской": "ru-RU-DmitryNeural"}
+LANGUAGES = {"Русский": "ru", "Английский": "en", "Украинский": "uk", "Испанский": "es", "Немецкий": "de", "Французский": "fr", "Итальянский": "it", "Китайский": "zh", "Японский": "ja", "Португальский": "pt"}
+CHARACTER_TRAITS = ["Смелый", "Добрый", "Любопытный", "Весёлый", "Умный"]
+APPEARANCES = ["Рыцарь", "Фея", "Космонавт", "Пират", "Волшебник"]
+
+async def edge_tts_speak(text, voice="ru-RU-SvetlanaNeural"):
+    try:
+        communicate = edge_tts.Communicate(text, voice)
+        audio_data = b""
+        async for chunk in communicate.stream():
+            if chunk["type"] == "audio":
+                audio_data += chunk["data"]
+        return audio_data
+    except Exception as e:
+        print(f"Edge TTS ошибка: {e}")
+        return None
+
+# ======== ОБРАБОТЧИКИ КОМАНД ========
 async def start(update, context):
     await update.message.reply_text("✨ Привет! Я бот для аудиосказок!", reply_markup=get_main_keyboard())
-
 async def help_command(update, context):
     await update.message.reply_text("Нажми /start и выбери «Создать сказку».", reply_markup=get_main_keyboard())
-
 async def donate(update, context):
-    await update.message.reply_text(f"❤️ Спасибо! Карта: {CARD_NUMBER}\nСсылка: {DONATE_LINK}", parse_mode="Markdown", reply_markup=get_main_keyboard())
-
+    await update.message.reply_text(
+        f"❤️ Спасибо, что хотите поддержать автора!\n\n"
+        f"💳 Номер карты: `{CARD_NUMBER}`\n"
+        f"🔗 Или по ссылке: {DONATE_LINK}\n\n"
+        f"После оплаты просто напишите «Оплатил» в чат, и я открою вам безлимит на 7 дней!",
+        parse_mode="Markdown",
+        reply_markup=get_main_keyboard()
+    )
 async def my_stories(update, context):
     user_id = update.effective_user.id
     stories = get_user_stories(user_id)
@@ -129,25 +145,32 @@ async def my_stories(update, context):
         keyboard = [[InlineKeyboardButton("🗑️ Удалить", callback_data=f"delete_{story['id']}")]]
         await update.message.reply_text(f"📖 {story['name']} – {story['topic']}", reply_markup=InlineKeyboardMarkup(keyboard))
 
-async def handle_buttons(update, context):
-    text = update.message.text
-    if text == "📖 Создать сказку":
-        await story_start(update, context)
-    elif text == "📚 Мои сказки":
-        await my_stories(update, context)
-    elif text == "❤️ Поддержать автора":
-        await donate(update, context)
-    elif text == "❓ Помощь":
-        await help_command(update, context)
-    else:
-        await update.message.reply_text("Напиши /start.", reply_markup=get_main_keyboard())
+# ======== УСТАНОВКА WEBHOOK (РАБОЧИЙ СОБСТВЕННЫЙ) ========
+async def set_webhook(update, context):
+    if update.effective_user.id != int(os.environ.get("ADMIN_ID", "0")):
+        await update.message.reply_text("⛔ Недоступно.")
+        return
+    await update.message.reply_text("🔧 Настраиваю вебхук...")
+    webhook_url = "https://yura180488.pythonanywhere.com/webhook"
+    result = await context.bot.set_webhook(webhook_url)
+    await update.message.reply_text(f"✅ Вебхук: {result}")
+    if not result:
+        await update.message.reply_text("❌ Проблема с вебхуком. Вконтакте настройте курл.")
 
+# ======== ДИАЛОГ ========
 NAME, TOPIC, LENGTH, MORAL, LANGUAGE, TRAIT, APPEARANCE, VOICE = range(8)
 
 async def story_start(update, context):
     user_id = update.effective_user.id
     if not can_create_story(user_id):
-        await update.message.reply_text(f"⚠️ Лимит на сегодня (3 сказки). Завтра обновится!", reply_markup=get_main_keyboard())
+        await update.message.reply_text(
+            f"⚠️ Вы исчерпали лимит на сегодня (3 сказки).\n\n"
+            f"💳 Поддержите автора, чтобы получить безлимит:\n"
+            f"Карта: `{CARD_NUMBER}`\n\n"
+            f"После оплаты напишите «Оплатил»!",
+            parse_mode="Markdown",
+            reply_markup=get_main_keyboard()
+        )
         return -1
     context.user_data['conversation'] = True
     await update.message.reply_text("📖 Напиши имя ребёнка:")
@@ -294,11 +317,17 @@ async def handle_inline(update, context):
         delete_story(story_id, update.effective_user.id)
         await query.message.reply_text("🗑️ Сказка удалена.")
 
+# ======== ИНИЦИАЛИЗАЦИЯ БОТА ========
 app = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
 
 app.add_handler(CommandHandler("start", start))
 app.add_handler(CommandHandler("help", help_command))
+app.add_handler(CommandHandler("donate", donate))
 app.add_handler(CommandHandler("my_stories", my_stories))
+app.add_handler(CommandHandler("unlock", unlock_user))
+
+# Отдельный блок для "оплатил" (автоматически получает бесплатный безлимит, если ты подтвердишь)
+app.add_handler(MessageHandler(filters.Regex("оплатил") & ~filters.COMMAND, handle_payment_message))
 
 conv = ConversationHandler(
     entry_points=[CommandHandler("story", story_start), MessageHandler(filters.Regex("📖 Создать сказку"), story_start)],
@@ -314,10 +343,9 @@ conv = ConversationHandler(
     },
     fallbacks=[CommandHandler("cancel", cancel)]
 )
-
 app.add_handler(conv)
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_buttons))
 app.add_handler(CallbackQueryHandler(handle_inline))
 
-# ВАЖНО! На Railway бот работает через постоянное соединение
+# ======== ГОТОВО! ========
 app.run_polling(allowed_updates=Update.ALL_TYPES)
