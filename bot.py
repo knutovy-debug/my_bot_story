@@ -4,9 +4,7 @@ import asyncio
 import requests
 from datetime import datetime, date
 
-# Gemini SDK
-import google.generativeai as genai
-
+from openai import OpenAI
 import edge_tts
 
 from telegram import Update, ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardButton, InlineKeyboardMarkup
@@ -14,15 +12,16 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters, C
 
 # ======== ТОКЕНЫ ========
 TELEGRAM_BOT_TOKEN = "8434163956:AAH_cUX7uvV46QX5d6XWUxWSMusHDApsOpU"
-OPENAI_API_KEY = "AQ.Ab8RN6KDL_BTvID6zqTHJzsUe9kCJ9F1l7hRqDGtkCQdKC46ow"  # СЮДА ВСТАВЬ СВОЙ КЛЮЧ GEMINI
+OPENAI_API_KEY = "sk-5172653204024fcaa7e26de04f04ec47"  # <--- ТВОЙ КЛЮЧ ОТ DEEPSEEK (начинается на sk-)
 HUGGINGFACE_TOKEN = "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"
-
 CARD_NUMBER = "2202208186522703"
 DONATE_LINK = "2202208186522703"
 
-# ======== ИНИЦИАЛИЗАЦИЯ GEMINI ========
-genai.configure(api_key=OPENAI_API_KEY)
-gemini_model = genai.GenerativeModel("gemini-1.5-flash")
+# ======== ИНИЦИАЛИЗАЦИЯ DEEPSEEK ========
+client = OpenAI(
+    api_key=OPENAI_API_KEY,
+    base_url="https://api.deepseek.com"
+)
 
 # ======== БАЗА ДАННЫХ (JSON) ========
 DB_FILE = "stories.json"
@@ -269,9 +268,14 @@ async def story_voice(update, context):
     prompt = f"Напиши {length} сказку для ребёнка 5-7 лет. Герой – {name}, {trait}, {appearance}. Тема: {topic}. Мораль: {moral}."
     await update.message.reply_text("⏳ Генерирую сказку...")
     try:
-        # Генерация через Gemini
-        response = gemini_model.generate_content(prompt)
-        story_text = response.text.strip()
+        # Генерация через DeepSeek
+        response = client.chat.completions.create(
+            model="deepseek-chat",
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=600,
+            temperature=0.7
+        )
+        story_text = response.choices[0].message.content.strip()
         await update.message.reply_text(f"📖 {story_text}")
     except Exception as e:
         await update.message.reply_text(f"❌ Ошибка генерации: {e}")
@@ -344,4 +348,4 @@ app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_buttons))
 app.add_handler(CallbackQueryHandler(handle_inline))
 
 # ======== ГОТОВО! ========
-app.run_polling(allowed_updates=Update.ALL_TYPES, timeout=30)
+app.run_polling(allowed_updates=Update.ALL_TYPES)
