@@ -356,8 +356,32 @@ conv = ConversationHandler(
     fallbacks=[CommandHandler("cancel", cancel)]
 )
 app.add_handler(conv)
+# ======== СТАТИСТИКА И БАЗА ========
+def get_user_stories(user_id):
+    db = load_db()
+    return [s for s in db["stories"] if s["user_id"] == user_id][::-1]
+
+def delete_story(story_id, user_id):
+    db = load_db()
+    db["stories"] = [s for s in db["stories"] if not (s["id"] == story_id and s["user_id"] == user_id)]
+    save_db(db)
+# ======== ОБРАБОТКА КНОПОК ========
+async def handle_buttons(update, context):
+    text = update.message.text
+    if text == "📖 Создать сказку":
+        await story_start(update, context)
+    elif text == "📚 Мои сказки":
+        await my_stories(update, context)
+    elif text == "❤️ Поддержать автора":
+        await donate(update, context)
+    elif text == "❓ Помощь":
+        await help_command(update, context)
+    else:
+        await update.message.reply_text("Напиши /start.", reply_markup=get_main_keyboard())
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_buttons))
 app.add_handler(CallbackQueryHandler(handle_inline))
 
 # ======== ГОТОВО! ========
 app.run_polling(allowed_updates=Update.ALL_TYPES)
+async def donate(update, context):
+    await update.message.reply_text(f"❤️ Спасибо! Карта: {CARD_NUMBER}\nСсылка: {DONATE_LINK}", parse_mode="Markdown", reply_markup=get_main_keyboard())
