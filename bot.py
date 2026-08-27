@@ -17,6 +17,8 @@ OPENAI_API_KEY = "sk-proj-raccdMupepEE-C6o0iFTAlv0FHZ5KyjyeBpZw69I7gf6qd82vEj1CA
 CARD_NUMBER = "2202208186522703"
 DONATE_LINK = "2202208186522703"
 
+client = OpenAI(api_key=OPENAI_API_KEY)
+
 # ======== БАЗА ДАННЫХ (JSON) ========
 DB_FILE = "stories.json"
 
@@ -123,6 +125,30 @@ async def handle_payment_message(update, context):
             await update.message.reply_text("✅ Спасибо за оплату! Теперь у тебя есть безлимит на 7 дней!", reply_markup=get_main_keyboard())
         else:
             await update.message.reply_text("✅ У тебя уже есть безлимит!", reply_markup=get_main_keyboard())
+
+# ======== ОБРАБОТЧИК КНОПОК ========
+async def handle_buttons(update, context):
+    text = update.message.text
+    if text == "📖 Создать сказку":
+        await story_start(update, context)
+    elif text == "📚 Мои сказки":
+        await my_stories(update, context)
+    elif text == "❤️ Поддержать автора":
+        await donate(update, context)
+    elif text == "❓ Помощь":
+        await help_command(update, context)
+    else:
+        await update.message.reply_text("Напиши /start.", reply_markup=get_main_keyboard())
+
+# ======== СТАТИСТИКА И БАЗА ========
+def get_user_stories(user_id):
+    db = load_db()
+    return [s for s in db["stories"] if s["user_id"] == user_id][::-1]
+
+def delete_story(story_id, user_id):
+    db = load_db()
+    db["stories"] = [s for s in db["stories"] if not (s["id"] == story_id and s["user_id"] == user_id)]
+    save_db(db)
 
 # ======== ДИАЛОГ ========
 NAME, TOPIC, LENGTH, MORAL, LANGUAGE, TRAIT, APPEARANCE, VOICE = range(8)
