@@ -12,7 +12,7 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters, C
 
 # ======== ТОКЕНЫ (ЗАМЕНИ НА СВОИ) ========
 TELEGRAM_BOT_TOKEN = os.environ.get("8434163956:AAH_cUX7uvV46QX5d6XWUxWSMusHDApsOpU")
-OPENAI_API_KEY = os.environ.get("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")
+OPENAI_API_KEY = os.environ.get("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")
 CARD_NUMBER = "2202208186522703"
 DONATE_LINK = "2202208186522703"
 
