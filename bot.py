@@ -325,7 +325,19 @@ app.add_handler(CommandHandler("help", help_command))
 app.add_handler(CommandHandler("donate", donate))
 app.add_handler(CommandHandler("my_stories", my_stories))
 app.add_handler(CommandHandler("unlock", unlock_user))
-
+# ======== ОБРАБОТКА ОПЛАТЫ ========
+async def handle_payment_message(update, context):
+    user_id = update.effective_user.id
+    # Если пользователь написал "оплатил"
+    if "оплатил" in update.message.text.lower():
+        # Добавляем его в Premium список
+        db = load_db()
+        if str(user_id) not in db["premium_users"]:
+            db["premium_users"].append(str(user_id))
+            save_db(db)
+            await update.message.reply_text("✅ Спасибо за оплату! Теперь у тебя есть безлимит на 7 дней!", reply_markup=get_main_keyboard())
+        else:
+            await update.message.reply_text("✅ У тебя уже есть безлимит!", reply_markup=get_main_keyboard())
 # Отдельный блок для "оплатил" (автоматически получает бесплатный безлимит, если ты подтвердишь)
 app.add_handler(MessageHandler(filters.Regex("оплатил") & ~filters.COMMAND, handle_payment_message))
 
