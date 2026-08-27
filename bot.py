@@ -3,7 +3,7 @@ import json
 import asyncio
 import requests
 from datetime import datetime, date
-from telegram.request import HTTPXRequest
+
 from openai import OpenAI
 import edge_tts
 
@@ -12,8 +12,8 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters, C
 
 # ======== ТОКЕНЫ (ЗАМЕНИ НА СВОИ) ========
 TELEGRAM_BOT_TOKEN = "8434163956:AAH_cUX7uvV46QX5d6XWUxWSMusHDApsOpU"
-OPENAI_API_KEY= "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"
-client = OpenAI(api_key=OPENAI_API_KEY)
+OPENAI_API_KEY = "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"
+
 CARD_NUMBER = "2202208186522703"
 DONATE_LINK = "2202208186522703"
 
@@ -56,36 +56,9 @@ def increment_daily_count(user_id):
     save_db(db)
 
 def can_create_story(user_id):
-    # Если Premium — безлимит
     if is_premium(user_id):
         return True
-    # Если бесплатный — лимит 3 в день
     return get_user_daily_count(user_id) < 3
-
-# ======== САМАЯ ВАЖНАЯ ФУНКЦИЯ: РАЗБЛОКИРОВКА ========
-# Используем команду /unlock 123456789
-async def unlock_user(update, context):
-    # Проверяем, что команду вводит владелец (ты сам)
-    admin_id = int(os.environ.get("ADMIN_ID", "0"))  # Вставь свой ID сюда (через @userinfobot)
-    if update.effective_user.id != admin_id:
-        await update.message.reply_text("⛔ Недоступно.")
-        return
-
-    if not context.args:
-        await update.message.reply_text("⚠️ Формат: /unlock 123456789")
-        return
-
-    try:
-        user_id = int(context.args[0])
-        db = load_db()
-        if str(user_id) not in db["premium_users"]:
-            db["premium_users"].append(str(user_id))
-            save_db(db)
-            await update.message.reply_text(f"✅ Разблокирован: {user_id}")
-        else:
-            await update.message.reply_text(f"✅ Уже разблокирован: {user_id}")
-    except Exception as e:
-        await update.message.reply_text(f"❌ Ошибка: {e}")
 
 # ======== КЛАВИАТУРА ========
 def get_main_keyboard():
@@ -128,14 +101,7 @@ async def start(update, context):
 async def help_command(update, context):
     await update.message.reply_text("Нажми /start и выбери «Создать сказку».", reply_markup=get_main_keyboard())
 async def donate(update, context):
-    await update.message.reply_text(
-        f"❤️ Спасибо, что хотите поддержать автора!\n\n"
-        f"💳 Номер карты: `{CARD_NUMBER}`\n"
-        f"🔗 Или по ссылке: {DONATE_LINK}\n\n"
-        f"После оплаты просто напишите «Оплатил» в чат, и я открою вам безлимит на 7 дней!",
-        parse_mode="Markdown",
-        reply_markup=get_main_keyboard()
-    )
+    await update.message.reply_text(f"❤️ Спасибо! Карта: {CARD_NUMBER}\nСсылка: {DONATE_LINK}", parse_mode="Markdown", reply_markup=get_main_keyboard())
 async def my_stories(update, context):
     user_id = update.effective_user.id
     stories = get_user_stories(user_id)
@@ -146,17 +112,17 @@ async def my_stories(update, context):
         keyboard = [[InlineKeyboardButton("🗑️ Удалить", callback_data=f"delete_{story['id']}")]]
         await update.message.reply_text(f"📖 {story['name']} – {story['topic']}", reply_markup=InlineKeyboardMarkup(keyboard))
 
-# ======== УСТАНОВКА WEBHOOK (РАБОЧИЙ СОБСТВЕННЫЙ) ========
-async def set_webhook(update, context):
-    if update.effective_user.id != int(os.environ.get("ADMIN_ID", "0")):
-        await update.message.reply_text("⛔ Недоступно.")
-        return
-    await update.message.reply_text("🔧 Настраиваю вебхук...")
-    webhook_url = "https://yura180488.pythonanywhere.com/webhook"
-    result = await context.bot.set_webhook(webhook_url)
-    await update.message.reply_text(f"✅ Вебхук: {result}")
-    if not result:
-        await update.message.reply_text("❌ Проблема с вебхуком. Вконтакте настройте курл.")
+# ======== ОБРАБОТКА ОПЛАТЫ ========
+async def handle_payment_message(update, context):
+    user_id = update.effective_user.id
+    if "оплатил" in update.message.text.lower():
+        db = load_db()
+        if str(user_id) not in db["premium_users"]:
+            db["premium_users"].append(str(user_id))
+            save_db(db)
+            await update.message.reply_text("✅ Спасибо за оплату! Теперь у тебя есть безлимит на 7 дней!", reply_markup=get_main_keyboard())
+        else:
+            await update.message.reply_text("✅ У тебя уже есть безлимит!", reply_markup=get_main_keyboard())
 
 # ======== ДИАЛОГ ========
 NAME, TOPIC, LENGTH, MORAL, LANGUAGE, TRAIT, APPEARANCE, VOICE = range(8)
@@ -319,26 +285,12 @@ async def handle_inline(update, context):
         await query.message.reply_text("🗑️ Сказка удалена.")
 
 # ======== ИНИЦИАЛИЗАЦИЯ БОТА ========
-app = Application.builder().token("8434163956:AAH_cUX7uvV46QX5d6XWUxWSMusHDApsOpU").build()
+app = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
+
 app.add_handler(CommandHandler("start", start))
 app.add_handler(CommandHandler("help", help_command))
 app.add_handler(CommandHandler("donate", donate))
 app.add_handler(CommandHandler("my_stories", my_stories))
-app.add_handler(CommandHandler("unlock", unlock_user))
-# ======== ОБРАБОТКА ОПЛАТЫ ========
-async def handle_payment_message(update, context):
-    user_id = update.effective_user.id
-    # Если пользователь написал "оплатил"
-    if "оплатил" in update.message.text.lower():
-        # Добавляем его в Premium список
-        db = load_db()
-        if str(user_id) not in db["premium_users"]:
-            db["premium_users"].append(str(user_id))
-            save_db(db)
-            await update.message.reply_text("✅ Спасибо за оплату! Теперь у тебя есть безлимит на 7 дней!", reply_markup=get_main_keyboard())
-        else:
-            await update.message.reply_text("✅ У тебя уже есть безлимит!", reply_markup=get_main_keyboard())
-# Отдельный блок для "оплатил" (автоматически получает бесплатный безлимит, если ты подтвердишь)
 app.add_handler(MessageHandler(filters.Regex("оплатил") & ~filters.COMMAND, handle_payment_message))
 
 conv = ConversationHandler(
@@ -356,32 +308,8 @@ conv = ConversationHandler(
     fallbacks=[CommandHandler("cancel", cancel)]
 )
 app.add_handler(conv)
-# ======== СТАТИСТИКА И БАЗА ========
-def get_user_stories(user_id):
-    db = load_db()
-    return [s for s in db["stories"] if s["user_id"] == user_id][::-1]
-
-def delete_story(story_id, user_id):
-    db = load_db()
-    db["stories"] = [s for s in db["stories"] if not (s["id"] == story_id and s["user_id"] == user_id)]
-    save_db(db)
-# ======== ОБРАБОТКА КНОПОК ========
-async def handle_buttons(update, context):
-    text = update.message.text
-    if text == "📖 Создать сказку":
-        await story_start(update, context)
-    elif text == "📚 Мои сказки":
-        await my_stories(update, context)
-    elif text == "❤️ Поддержать автора":
-        await donate(update, context)
-    elif text == "❓ Помощь":
-        await help_command(update, context)
-    else:
-        await update.message.reply_text("Напиши /start.", reply_markup=get_main_keyboard())
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_buttons))
 app.add_handler(CallbackQueryHandler(handle_inline))
 
 # ======== ГОТОВО! ========
 app.run_polling(allowed_updates=Update.ALL_TYPES)
-async def donate(update, context):
-    await update.message.reply_text(f"❤️ Спасибо! Карта: {CARD_NUMBER}\nСсылка: {DONATE_LINK}", parse_mode="Markdown", reply_markup=get_main_keyboard())
