@@ -11,7 +11,7 @@ from telegram import Update, ReplyKeyboardMarkup, KeyboardButton, InlineKeyboard
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ConversationHandler, ContextTypes, CallbackQueryHandler
 
 # ======== ТОКЕНЫ ========
-TELEGRAM_BOT_TOKEN = "8434163956:AAH_cUX7uvV46QX5d6XWUxWSMusHDApsOpU"
+TELEGRAM_BOT_TOKEN = "8434163956:AAHgBm2ykoOf0Nsrqr-Ir26P5TWOdIsLvZk"
 OPENAI_API_KEY = "sk-5172653204024fcaa7e26de04f04ec47"  # <--- ТВОЙ КЛЮЧ ОТ DEEPSEEK (начинается на sk-)
 HUGGINGFACE_TOKEN = "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"
 CARD_NUMBER = "2202208186522703"
