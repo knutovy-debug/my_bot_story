@@ -15,6 +15,7 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters, C
 # ======== ТОКЕНЫ ========
 TELEGRAM_BOT_TOKEN = "8434163956:AAH_cUX7uvV46QX5d6XWUxWSMusHDApsOpU"
 OPENAI_API_KEY = "AQ.Ab8RN6KDL_BTvID6zqTHJzsUe9kCJ9F1l7hRqDGtkCQdKC46ow"  # СЮДА ВСТАВЬ СВОЙ КЛЮЧ GEMINI
+HUGGINGFACE_TOKEN = "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"
 
 CARD_NUMBER = "2202208186522703"
 DONATE_LINK = "2202208186522703"
