@@ -14,7 +14,7 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters, C
 # ======== ТОКЕНЫ ========
 TELEGRAM_BOT_TOKEN = "8434163956:AAFsId_CNRX2rkCBH4_gsIrWxa99k1ohUsA"
 OPENAI_API_KEY = "sk-5172653204024fcaa7e26de04f04ec47"
-HUGGINGFACE_TOKEN = "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"
+
 CARD_NUMBER = "2202208186522703"
 DONATE_LINK = "2202208186522703"
 
@@ -102,6 +102,18 @@ def get_moral_keyboard():
         ["🔬 Любознательность"],
         ["🎭 Терпение"],
     ], one_time_keyboard=True, resize_keyboard=True)
+
+def get_language_keyboard():
+    return ReplyKeyboardMarkup([[name] for name in LANGUAGES.keys()], one_time_keyboard=True, resize_keyboard=True)
+
+def get_trait_keyboard():
+    return ReplyKeyboardMarkup([[trait] for trait in CHARACTER_TRAITS], one_time_keyboard=True, resize_keyboard=True)
+
+def get_appearance_keyboard():
+    return ReplyKeyboardMarkup([[appearance] for appearance in APPEARANCES], one_time_keyboard=True, resize_keyboard=True)
+
+def get_voice_keyboard():
+    return ReplyKeyboardMarkup([[name] for name in VOICES.keys()], one_time_keyboard=True, resize_keyboard=True)
 
 # ======== НАСТРОЙКИ БОТА (Голоса, языки) ========
 VOICES = {"Женский": "ru-RU-SvetlanaNeural", "Мужской": "ru-RU-DmitryNeural"}
