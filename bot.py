@@ -134,9 +134,6 @@ def get_language_keyboard():
 def get_trait_keyboard():
     return ReplyKeyboardMarkup([[trait] for trait in CHARACTER_TRAITS], one_time_keyboard=True, resize_keyboard=True)
 
-def get_appearance_keyboard():
-    return ReplyKeyboardMarkup([["🧙 Волшебник"]], one_time_keyboard=True, resize_keyboard=True)
-
 def get_voice_keyboard():
     return ReplyKeyboardMarkup([[name] for name in VOICES.keys()], one_time_keyboard=True, resize_keyboard=True)
 
@@ -147,7 +144,6 @@ VOICES = {
 }
 LANGUAGES = {"🇷🇺 Русский": "ru"}
 CHARACTER_TRAITS = ["Смелый", "Добрый", "Любопытный", "Весёлый", "Умный"]
-
 
 async def edge_tts_speak(text, voice="ru-RU-SvetlanaNeural"):
     try:
@@ -205,7 +201,7 @@ async def handle_buttons(update, context):
         await update.message.reply_text("Напиши /start.", reply_markup=get_main_keyboard())
 
 # ======== ДИАЛОГ ========
-NAME, TOPIC, LENGTH, MORAL, LANGUAGE, TRAIT, APPEARANCE, VOICE = range(8)
+NAME, TOPIC, LENGTH, MORAL, LANGUAGE, TRAIT, VOICE = range(7)
 
 async def story_start(update, context):
     user_id = update.effective_user.id
@@ -280,23 +276,6 @@ async def story_trait(update, context):
         await update.message.reply_text("❌ Я не понял характер. Нажми кнопку или напиши 'Смелый'.", reply_markup=get_trait_keyboard())
         return TRAIT
     context.user_data['trait'] = trait
-    await update.message.reply_text("🧙‍♂️ Выбери внешность героя:", reply_markup=get_appearance_keyboard())
-    return APPEARANCE
-
-async def story_appearance(update, context):
-    chosen = update.message.text
-    appearance = None
-    if chosen in APPEARANCES:
-        appearance = chosen
-    else:
-        for item in APPEARANCES:
-            if item.lower() in chosen.lower():
-                appearance = item
-                break
-    if appearance is None:
-        await update.message.reply_text("❌ Я не понял внешность. Нажми кнопку или напиши 'Волшебник'.", reply_markup=get_appearance_keyboard())
-        return APPEARANCE
-    context.user_data['appearance'] = appearance
     await update.message.reply_text("🎤 Выбери голос:", reply_markup=get_voice_keyboard())
     return VOICE
 
@@ -320,7 +299,6 @@ async def story_voice(update, context):
     moral = context.user_data['moral']
     language = context.user_data['language']
     trait = context.user_data['trait']
-    appearance = context.user_data['appearance']
     prompt = f"Напиши {length} сказку для ребёнка 5-7 лет. Герой – {name}, {trait}, {appearance}. Тема: {topic}. Мораль: {moral}. Напиши текст БЕЗ использования звёздочек, решёток и каких-либо символов форматирования. Просто чистый текст. Обязательно закончи сказку красивым финалом!"
     await update.message.reply_text("⏳ Генерирую сказку...")
     try:
@@ -390,7 +368,6 @@ conv = ConversationHandler(
         MORAL: [MessageHandler(filters.TEXT & ~filters.COMMAND, story_moral)],
         LANGUAGE: [MessageHandler(filters.TEXT & ~filters.COMMAND, story_language)],
         TRAIT: [MessageHandler(filters.TEXT & ~filters.COMMAND, story_trait)],
-        APPEARANCE: [MessageHandler(filters.TEXT & ~filters.COMMAND, story_appearance)],
         VOICE: [MessageHandler(filters.TEXT & ~filters.COMMAND, story_voice)],
     },
     fallbacks=[CommandHandler("cancel", cancel)]
