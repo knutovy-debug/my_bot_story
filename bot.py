@@ -273,7 +273,7 @@ async def story_voice(update, context):
     trait = context.user_data['trait']
     appearance = context.user_data['appearance']
     prompt = f"Напиши {length} сказку для ребёнка 5-7 лет. Герой – {name}, {trait}, {appearance}. Тема: {topic}. Мораль: {moral}."
-     prompt = f"Напиши {length} сказку для ребёнка 5-7 лет. Герой – {name}, {trait}, {appearance}. Тема: {topic}. Мораль: {moral}."
+    prompt = f"Напиши {length} сказку для ребёнка 5-7 лет. Герой – {name}, {trait}, {appearance}. Тема: {topic}. Мораль: {moral}."
     
     # Добавляем паузу для более живой озвучки
     import re
