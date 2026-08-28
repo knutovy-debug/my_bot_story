@@ -24,17 +24,6 @@ client = OpenAI(
     base_url="https://api.deepseek.com"
 )
 
-# ======== ФУНКЦИЯ ГЕНЕРАЦИИ КАРТИНОК ========
-async def generate_image(prompt):
-    try:
-        url = f"https://image.pollinations.ai/prompt/{prompt}?width=512&height=512&nologo=true"
-        response = requests.get(url, timeout=30)
-        if response.status_code == 200:
-            return response.content
-    except:
-        pass
-    return None
-
 # ======== БАЗА ДАННЫХ (JSON) ========
 DB_FILE = "stories.json"
 
@@ -141,7 +130,7 @@ def get_moral_keyboard():
     ], one_time_keyboard=True, resize_keyboard=True)
 
 def get_language_keyboard():
-    return ReplyKeyboardMarkup([[name] for name in LANGUAGES.keys()], one_time_keyboard=True, resize_keyboard=True)
+    return ReplyKeyboardMarkup([["🇷🇺 Русский"]], one_time_keyboard=True, resize_keyboard=True)
 
 def get_trait_keyboard():
     return ReplyKeyboardMarkup([[trait] for trait in CHARACTER_TRAITS], one_time_keyboard=True, resize_keyboard=True)
@@ -161,7 +150,7 @@ VOICES = {
     "🐻 Мягкий (Светлана)": "ru-RU-SvetlanaNeural",
     "🦸 Геройский (Дмитрий)": "ru-RU-DmitryNeural",
 }
-LANGUAGES = {"Русский": "ru", "Английский": "en", "Украинский": "uk", "Испанский": "es", "Немецкий": "de", "Французский": "fr", "Итальянский": "it", "Китайский": "zh", "Японский": "ja", "Португальский": "pt"}
+LANGUAGES = {"🇷🇺 Русский": "ru"}
 CHARACTER_TRAITS = ["Смелый", "Добрый", "Любопытный", "Весёлый", "Умный"]
 APPEARANCES = ["Рыцарь", "Фея", "Космонавт", "Пират", "Волшебник"]
 
@@ -364,13 +353,6 @@ async def story_voice(update, context):
         increment_daily_count(update.effective_user.id)
     else:
         await update.message.reply_text("❌ Ошибка озвучки.")
-    await update.message.reply_text("🎨 Генерирую картинку...")
-    image_prompt = f"{name} as a {trait} {appearance} in a {topic} fairy tale"
-    image_bytes = await generate_image(image_prompt)
-    if image_bytes:
-        await update.message.reply_photo(image_bytes, caption="🖼️ Иллюстрация")
-    else:
-        await update.message.reply_text("❌ Не удалось сгенерировать картинку.")
     keyboard = [[InlineKeyboardButton("📖 Создать ещё сказку", callback_data="new_story")], [InlineKeyboardButton("🏠 Главное меню", callback_data="main_menu")]]
     await update.message.reply_text("Что хочешь сделать дальше?", reply_markup=InlineKeyboardMarkup(keyboard))
     context.user_data['conversation'] = False
