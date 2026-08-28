@@ -95,9 +95,13 @@ def can_create_story(user_id):
 
 # ======== КЛАВИАТУРА ========
 def get_main_keyboard():
-    keyboard = [[KeyboardButton("📖 Создать сказку")], [KeyboardButton("📚 Мои сказки")], [KeyboardButton("❤️ Поддержать автора")], [KeyboardButton("❓ Помощь")]]
+    keyboard = [
+        [KeyboardButton("📖 Создать сказку")],
+        [KeyboardButton("📚 Мои сказки")],
+        [KeyboardButton("👨‍👩‍👧 Поддержать")],
+        [KeyboardButton("❓ Помощь")],
+    ]
     return ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
-
 def get_topic_keyboard():
     return ReplyKeyboardMarkup([
         ["🚀 Космос"],
@@ -168,7 +172,15 @@ async def edge_tts_speak(text, voice="ru-RU-SvetlanaNeural"):
 
 # ======== ОБРАБОТЧИКИ КОМАНД ========
 async def start(update, context):
-    await update.message.reply_text("✨ Привет! Я бот для аудиосказок!", reply_markup=get_main_keyboard())
+    await update.message.reply_text(
+        "✨ *Волшебная Сказка* ✨\n\n"
+        "Привет! Я создаю *персонализированные аудиосказки* для детей.\n"
+        "📖 Выбери имя, тему и мораль — и я придумаю историю.\n"
+        "🔊 Озвучу её приятным голосом.\n"
+        "👉 Нажми кнопку ниже, чтобы начать!",
+        parse_mode="Markdown",
+        reply_markup=get_main_keyboard()
+    )
 async def help_command(update, context):
     await update.message.reply_text("Нажми /start и выбери «Создать сказку».", reply_markup=get_main_keyboard())
 async def donate(update, context):
