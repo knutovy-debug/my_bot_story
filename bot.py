@@ -12,9 +12,9 @@ from telegram import Update, ReplyKeyboardMarkup, KeyboardButton, InlineKeyboard
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ConversationHandler, ContextTypes, CallbackQueryHandler
 
 # ======== ТОКЕНЫ ========
-TELEGRAM_BOT_TOKEN = "8434163956:AAHgBm2ykoOf0Nsrqr-Ir26P5TWOdIsLvZk"
-OPENAI_API_KEY = "sk-5172653204024fcaa7e26de04f04ec47"  # <--- ТВОЙ КЛЮЧ ОТ DEEPSEEK (начинается на sk-)
-HUGGINGFACE_TOKEN = "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"
+TELEGRAM_BOT_TOKEN = "8434163956:AAH_cUX7uvV46QX5d6XWUxWSMusHDApsOpU"
+OPENAI_API_KEY = "sk-5172653204024fcaa7e26de04f04ec47K"
+
 CARD_NUMBER = "2202208186522703"
 DONATE_LINK = "2202208186522703"
 
@@ -72,17 +72,40 @@ def get_main_keyboard():
     keyboard = [[KeyboardButton("📖 Создать сказку")], [KeyboardButton("📚 Мои сказки")], [KeyboardButton("❤️ Поддержать автора")], [KeyboardButton("❓ Помощь")]]
     return ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
 
-def get_language_keyboard():
-    return ReplyKeyboardMarkup([[name] for name in LANGUAGES.keys()], one_time_keyboard=True, resize_keyboard=True)
+# Кнопки для Темы
+def get_topic_keyboard():
+    return ReplyKeyboardMarkup([
+        ["🚀 Космос"],
+        ["🦕 Динозавры"],
+        ["👸 Принцессы"],
+        ["🏴‍☠️ Пираты"],
+        ["🧚 Феи и Волшебство"],
+        ["🐾 Лесные зверята"],
+        ["🎃 Хэллоуин (добрая)"],
+        ["🎄 Новый год и Зима"],
+        ["🏰 Рыцари и Замки"],
+        ["🌊 Подводный мир"],
+    ], one_time_keyboard=True, resize_keyboard=True)
 
-def get_trait_keyboard():
-    return ReplyKeyboardMarkup([[trait] for trait in CHARACTER_TRAITS], one_time_keyboard=True, resize_keyboard=True)
+# Кнопки для Длины
+def get_length_keyboard():
+    return ReplyKeyboardMarkup([
+        ["📖 Короткая (5-7 минут)"],
+        ["📖📖 Средняя (8-12 минут)"],
+        ["📖📖📖 Длинная (15 минут+)"],
+    ], one_time_keyboard=True, resize_keyboard=True)
 
-def get_appearance_keyboard():
-    return ReplyKeyboardMarkup([[appearance] for appearance in APPEARANCES], one_time_keyboard=True, resize_keyboard=True)
-
-def get_voice_keyboard():
-    return ReplyKeyboardMarkup([[name] for name in VOICES.keys()], one_time_keyboard=True, resize_keyboard=True)
+# Кнопки для Морали
+def get_moral_keyboard():
+    return ReplyKeyboardMarkup([
+        ["💛 Дружба"],
+        ["🏆 Смелость"],
+        ["🤝 Доброта"],
+        ["🔍 Честность"],
+        ["🏡 Семья"],
+        ["🔬 Любознательность"],
+        ["🎭 Терпение"],
+    ], one_time_keyboard=True, resize_keyboard=True)
 
 # ======== НАСТРОЙКИ БОТА (Голоса, языки) ========
 VOICES = {"Женский": "ru-RU-SvetlanaNeural", "Мужской": "ru-RU-DmitryNeural"}
@@ -92,14 +115,7 @@ APPEARANCES = ["Рыцарь", "Фея", "Космонавт", "Пират", "В
 
 async def edge_tts_speak(text, voice="ru-RU-SvetlanaNeural"):
     try:
-        # Настройки для более выразительной озвучки
-        communicate = edge_tts.Communicate(
-            text, 
-            voice=voice, 
-            rate="+8%",      # Немного быстрее
-            volume="+0%",    # Нормальная громкость
-            pitch="+2Hz"     # Немного выше, для детских сказок
-        )
+        communicate = edge_tts.Communicate(text, voice)
         audio_data = b""
         async for chunk in communicate.stream():
             if chunk["type"] == "audio":
@@ -183,21 +199,28 @@ async def story_start(update, context):
 
 async def story_name(update, context):
     context.user_data['name'] = update.message.text
-    await update.message.reply_text("✏️ Тему (Космос, Динозавры, Принцессы...):")
+    await update.message.reply_text("✏️ Выбери тему сказки:", reply_markup=get_topic_keyboard())
     return TOPIC
 
 async def story_topic(update, context):
-    context.user_data['topic'] = update.message.text
-    await update.message.reply_text("📏 Длину (короткая, средняя, длинная):")
+    chosen = update.message.text
+    # Убираем эмодзи для промпта
+    topic = chosen.replace("🚀 ", "").replace("🦕 ", "").replace("👸 ", "").replace("🏴‍☠️ ", "").replace("🧚 ", "").replace("🐾 ", "").replace("🎃 ", "").replace("🎄 ", "").replace("🏰 ", "").replace("🌊 ", "")
+    context.user_data['topic'] = topic
+    await update.message.reply_text("📏 Выбери длину сказки:", reply_markup=get_length_keyboard())
     return LENGTH
 
 async def story_length(update, context):
-    context.user_data['length'] = update.message.text
-    await update.message.reply_text("💡 Мораль (дружба, смелость...):")
+    chosen = update.message.text
+    length = chosen.replace("📖📖📖 ", "").replace("📖📖 ", "").replace("📖 ", "")
+    context.user_data['length'] = length
+    await update.message.reply_text("💡 Выбери мораль сказки:", reply_markup=get_moral_keyboard())
     return MORAL
 
 async def story_moral(update, context):
-    context.user_data['moral'] = update.message.text
+    chosen = update.message.text
+    moral = chosen.replace("💛 ", "").replace("🏆 ", "").replace("🤝 ", "").replace("🔍 ", "").replace("🏡 ", "").replace("🔬 ", "").replace("🎭 ", "")
+    context.user_data['moral'] = moral
     await update.message.reply_text("🌐 Выбери язык:", reply_markup=get_language_keyboard())
     return LANGUAGE
 
@@ -273,32 +296,30 @@ async def story_voice(update, context):
     language = context.user_data['language']
     trait = context.user_data['trait']
     appearance = context.user_data['appearance']
-    prompt = f"Напиши {length} сказку для ребёнка 5-7 лет. Герой – {name}, {trait}, {appearance}. Тема: {topic}. Мораль: {moral}. Убедись, что сказка обязательно заканчивается красивым финалом и моралью!"
-    
-    # Добавляем паузу для более живой озвучки
-    import re
+    prompt = f"Напиши {length} сказку для ребёнка 5-7 лет. Герой – {name}, {trait}, {appearance}. Тема: {topic}. Мораль: {moral}. Напиши текст БЕЗ использования звёздочек, решёток и каких-либо символов форматирования. Просто чистый текст. Обязательно закончи сказку красивым финалом!"
     await update.message.reply_text("⏳ Генерирую сказку...")
     try:
-        # Генерация через DeepSeek
         response = client.chat.completions.create(
             model="deepseek-chat",
             messages=[{"role": "user", "content": prompt}],
             max_tokens=1500,
             temperature=0.7
         )
-        story_text = response = client.chat.completions.create(
-            model="deepseek-chat",
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=1500,
-            temperature=0.7
-        )
         story_text = response.choices[0].message.content.strip()
-        # Убираем разметку Markdown (звёздочки, решётки и т.д.)
-        story_text = re.sub(r'\*\*', '', story_text)  # Убираем двойные звёздочки
-        story_text = re.sub(r'\*', '', story_text)    # Убираем одиночные звёздочки
-        story_text = re.sub(r'#', '', story_text)     # Убираем решётки
-        story_text = re.sub(r'---', '', story_text)   # Убираем длинные тире
+        # Убираем разметку Markdown
+        story_text = re.sub(r'\*\*', '', story_text)
+        story_text = re.sub(r'\*', '', story_text)
+        story_text = re.sub(r'#', '', story_text)
+        story_text = re.sub(r'---', '', story_text)
         await update.message.reply_text(f"📖 {story_text}")
+    except Exception as e:
+        await update.message.reply_text(f"❌ Ошибка генерации: {e}")
+        context.user_data['conversation'] = False
+        return -1
+    await update.message.reply_text("🔊 Озвучиваю...")
+    audio_bytes = await edge_tts_speak(story_text, voice=voice_name)
+    if audio_bytes:
+        await update.message.reply_audio(audio_bytes, caption="✅ Готово!")
         save_story(update.effective_user.id, name, topic, length, moral, language, trait, appearance, story_text)
         increment_daily_count(update.effective_user.id)
     else:
