@@ -91,7 +91,14 @@ APPEARANCES = ["Рыцарь", "Фея", "Космонавт", "Пират", "В
 
 async def edge_tts_speak(text, voice="ru-RU-SvetlanaNeural"):
     try:
-        communicate = edge_tts.Communicate(text, voice)
+        # Настройки для более выразительной озвучки
+        communicate = edge_tts.Communicate(
+            text, 
+            voice=voice, 
+            rate="+8%",      # Немного быстрее
+            volume="+0%",    # Нормальная громкость
+            pitch="+2Hz"     # Немного выше, для детских сказок
+        )
         audio_data = b""
         async for chunk in communicate.stream():
             if chunk["type"] == "audio":
@@ -266,6 +273,11 @@ async def story_voice(update, context):
     trait = context.user_data['trait']
     appearance = context.user_data['appearance']
     prompt = f"Напиши {length} сказку для ребёнка 5-7 лет. Герой – {name}, {trait}, {appearance}. Тема: {topic}. Мораль: {moral}."
+     prompt = f"Напиши {length} сказку для ребёнка 5-7 лет. Герой – {name}, {trait}, {appearance}. Тема: {topic}. Мораль: {moral}."
+    
+    # Добавляем паузу для более живой озвучки
+    import re
+    story_text = re.sub(r'(?<=[.!?])\s+', '... ', story_text)
     await update.message.reply_text("⏳ Генерирую сказку...")
     try:
         # Генерация через DeepSeek
