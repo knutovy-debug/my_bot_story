@@ -95,13 +95,9 @@ def can_create_story(user_id):
 
 # ======== КЛАВИАТУРА ========
 def get_main_keyboard():
-    keyboard = [
-        [KeyboardButton("📖 Создать сказку")],
-        [KeyboardButton("📚 Мои сказки")],
-        [KeyboardButton("👨‍👩‍👧 Поддержать")],
-        [KeyboardButton("❓ Помощь")],
-    ]
+    keyboard = [[KeyboardButton("📖 Создать сказку")], [KeyboardButton("📚 Мои сказки")], [KeyboardButton("❤️ Поддержать автора")], [KeyboardButton("❓ Помощь")]]
     return ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+
 def get_topic_keyboard():
     return ReplyKeyboardMarkup([
         ["🚀 Космос"],
@@ -140,7 +136,7 @@ def get_trait_keyboard():
     return ReplyKeyboardMarkup([[trait] for trait in CHARACTER_TRAITS], one_time_keyboard=True, resize_keyboard=True)
 
 def get_appearance_keyboard():
-    return ReplyKeyboardMarkup([[appearance] for appearance in APPEARANCES], one_time_keyboard=True, resize_keyboard=True)
+    return ReplyKeyboardMarkup([["🧙 Волшебник"]], one_time_keyboard=True, resize_keyboard=True)
 
 def get_voice_keyboard():
     return ReplyKeyboardMarkup([[name] for name in VOICES.keys()], one_time_keyboard=True, resize_keyboard=True)
@@ -152,7 +148,7 @@ VOICES = {
 }
 LANGUAGES = {"🇷🇺 Русский": "ru"}
 CHARACTER_TRAITS = ["Смелый", "Добрый", "Любопытный", "Весёлый", "Умный"]
-APPEARANCES = ["Рыцарь", "Фея", "Космонавт", "Пират", "Волшебник"]
+APPEARANCES = ["Волшебник"]
 
 async def edge_tts_speak(text, voice="ru-RU-SvetlanaNeural"):
     try:
@@ -168,15 +164,7 @@ async def edge_tts_speak(text, voice="ru-RU-SvetlanaNeural"):
 
 # ======== ОБРАБОТЧИКИ КОМАНД ========
 async def start(update, context):
-    await update.message.reply_text(
-        "✨ *Волшебная Сказка* ✨\n\n"
-        "Привет! Я создаю *персонализированные аудиосказки* для детей.\n"
-        "📖 Выбери имя, тему и мораль — и я придумаю историю.\n"
-        "🔊 Озвучу её приятным голосом.\n"
-        "👉 Нажми кнопку ниже, чтобы начать!",
-        parse_mode="Markdown",
-        reply_markup=get_main_keyboard()
-    )
+    await update.message.reply_text("✨ Привет! Я бот для аудиосказок!", reply_markup=get_main_keyboard())
 async def help_command(update, context):
     await update.message.reply_text("Нажми /start и выбери «Создать сказку».", reply_markup=get_main_keyboard())
 async def donate(update, context):
@@ -307,7 +295,7 @@ async def story_appearance(update, context):
                 appearance = item
                 break
     if appearance is None:
-        await update.message.reply_text("❌ Я не понял внешность. Нажми кнопку или напиши 'Рыцарь'.", reply_markup=get_appearance_keyboard())
+        await update.message.reply_text("❌ Я не понял внешность. Нажми кнопку или напиши 'Волшебник'.", reply_markup=get_appearance_keyboard())
         return APPEARANCE
     context.user_data['appearance'] = appearance
     await update.message.reply_text("🎤 Выбери голос:", reply_markup=get_voice_keyboard())
