@@ -13,8 +13,8 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters, C
 
 # ======== ТОКЕНЫ ========
 TELEGRAM_BOT_TOKEN = "8434163956:AAFsId_CNRX2rkCBH4_gsIrWxa99k1ohUsA"
-OPENAI_API_KEY = "sk-5172653204024fcaa7e26de04f04ec47K"
-
+OPENAI_API_KEY = "sk-5172653204024fcaa7e26de04f04ec47"
+HUGGINGFACE_TOKEN = "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"
 CARD_NUMBER = "2202208186522703"
 DONATE_LINK = "2202208186522703"
 
@@ -72,7 +72,6 @@ def get_main_keyboard():
     keyboard = [[KeyboardButton("📖 Создать сказку")], [KeyboardButton("📚 Мои сказки")], [KeyboardButton("❤️ Поддержать автора")], [KeyboardButton("❓ Помощь")]]
     return ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
 
-# Кнопки для Темы
 def get_topic_keyboard():
     return ReplyKeyboardMarkup([
         ["🚀 Космос"],
@@ -81,13 +80,11 @@ def get_topic_keyboard():
         ["🏴‍☠️ Пираты"],
         ["🧚 Феи и Волшебство"],
         ["🐾 Лесные зверята"],
-        ["🎃 Хэллоуин (добрая)"],
         ["🎄 Новый год и Зима"],
         ["🏰 Рыцари и Замки"],
         ["🌊 Подводный мир"],
     ], one_time_keyboard=True, resize_keyboard=True)
 
-# Кнопки для Длины
 def get_length_keyboard():
     return ReplyKeyboardMarkup([
         ["📖 Короткая (5-7 минут)"],
@@ -95,7 +92,6 @@ def get_length_keyboard():
         ["📖📖📖 Длинная (15 минут+)"],
     ], one_time_keyboard=True, resize_keyboard=True)
 
-# Кнопки для Морали
 def get_moral_keyboard():
     return ReplyKeyboardMarkup([
         ["💛 Дружба"],
@@ -204,8 +200,7 @@ async def story_name(update, context):
 
 async def story_topic(update, context):
     chosen = update.message.text
-    # Убираем эмодзи для промпта
-    topic = chosen.replace("🚀 ", "").replace("🦕 ", "").replace("👸 ", "").replace("🏴‍☠️ ", "").replace("🧚 ", "").replace("🐾 ", "").replace("🎃 ", "").replace("🎄 ", "").replace("🏰 ", "").replace("🌊 ", "")
+    topic = chosen.replace("🚀 ", "").replace("🦕 ", "").replace("👸 ", "").replace("🏴‍☠️ ", "").replace("🧚 ", "").replace("🐾 ", "").replace("🎄 ", "").replace("🏰 ", "").replace("🌊 ", "")
     context.user_data['topic'] = topic
     await update.message.reply_text("📏 Выбери длину сказки:", reply_markup=get_length_keyboard())
     return LENGTH
@@ -306,7 +301,6 @@ async def story_voice(update, context):
             temperature=0.7
         )
         story_text = response.choices[0].message.content.strip()
-        # Убираем разметку Markdown
         story_text = re.sub(r'\*\*', '', story_text)
         story_text = re.sub(r'\*', '', story_text)
         story_text = re.sub(r'#', '', story_text)
