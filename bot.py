@@ -286,16 +286,19 @@ async def story_voice(update, context):
             max_tokens=1500,
             temperature=0.7
         )
+        story_text = response = client.chat.completions.create(
+            model="deepseek-chat",
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=1500,
+            temperature=0.7
+        )
         story_text = response.choices[0].message.content.strip()
+        # Убираем разметку Markdown (звёздочки, решётки и т.д.)
+        story_text = re.sub(r'\*\*', '', story_text)  # Убираем двойные звёздочки
+        story_text = re.sub(r'\*', '', story_text)    # Убираем одиночные звёздочки
+        story_text = re.sub(r'#', '', story_text)     # Убираем решётки
+        story_text = re.sub(r'---', '', story_text)   # Убираем длинные тире
         await update.message.reply_text(f"📖 {story_text}")
-    except Exception as e:
-        await update.message.reply_text(f"❌ Ошибка генерации: {e}")
-        context.user_data['conversation'] = False
-        return -1
-    await update.message.reply_text("🔊 Озвучиваю...")
-    audio_bytes = await edge_tts_speak(story_text, voice=voice_name)
-    if audio_bytes:
-        await update.message.reply_audio(audio_bytes, caption="✅ Готово!")
         save_story(update.effective_user.id, name, topic, length, moral, language, trait, appearance, story_text)
         increment_daily_count(update.effective_user.id)
     else:
