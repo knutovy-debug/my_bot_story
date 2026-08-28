@@ -273,8 +273,7 @@ async def story_voice(update, context):
     language = context.user_data['language']
     trait = context.user_data['trait']
     appearance = context.user_data['appearance']
-    prompt = f"Напиши {length} сказку для ребёнка 5-7 лет. Герой – {name}, {trait}, {appearance}. Тема: {topic}. Мораль: {moral}."
-    prompt = f"Напиши {length} сказку для ребёнка 5-7 лет. Герой – {name}, {trait}, {appearance}. Тема: {topic}. Мораль: {moral}."
+    prompt = f"Напиши {length} сказку для ребёнка 5-7 лет. Герой – {name}, {trait}, {appearance}. Тема: {topic}. Мораль: {moral}. Убедись, что сказка обязательно заканчивается красивым финалом и моралью!"
     
     # Добавляем паузу для более живой озвучки
     import re
@@ -284,7 +283,7 @@ async def story_voice(update, context):
         response = client.chat.completions.create(
             model="deepseek-chat",
             messages=[{"role": "user", "content": prompt}],
-            max_tokens=600,
+            max_tokens=1500,
             temperature=0.7
         )
         story_text = response.choices[0].message.content.strip()
