@@ -153,7 +153,14 @@ def get_voice_keyboard():
     return ReplyKeyboardMarkup([[name] for name in VOICES.keys()], one_time_keyboard=True, resize_keyboard=True)
 
 # ======== НАСТРОЙКИ БОТА (Голоса, языки) ========
-VOICES = {"Женский": "ru-RU-SvetlanaNeural", "Мужской": "ru-RU-DmitryNeural"}
+VOICES = {
+    "🌸 Женский (Светлана)": "ru-RU-SvetlanaNeural",
+    "🧔 Мужской (Дмитрий)": "ru-RU-DmitryNeural",
+    "👧 Детский (Света)": "ru-RU-SvetlanaNeural",
+    "🧙 Волшебный (Дмитрий)": "ru-RU-DmitryNeural",
+    "🐻 Мягкий (Светлана)": "ru-RU-SvetlanaNeural",
+    "🦸 Геройский (Дмитрий)": "ru-RU-DmitryNeural",
+}
 LANGUAGES = {"Русский": "ru", "Английский": "en", "Украинский": "uk", "Испанский": "es", "Немецкий": "de", "Французский": "fr", "Итальянский": "it", "Китайский": "zh", "Японский": "ja", "Португальский": "pt"}
 CHARACTER_TRAITS = ["Смелый", "Добрый", "Любопытный", "Весёлый", "Умный"]
 APPEARANCES = ["Рыцарь", "Фея", "Космонавт", "Пират", "Волшебник"]
