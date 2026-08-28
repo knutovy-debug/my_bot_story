@@ -14,7 +14,6 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters, C
 # ======== ТОКЕНЫ ========
 TELEGRAM_BOT_TOKEN = "8434163956:AAFsId_CNRX2rkCBH4_gsIrWxa99k1ohUsA"
 OPENAI_API_KEY = "sk-5172653204024fcaa7e26de04f04ec47"
-
 CARD_NUMBER = "2202208186522703"
 DONATE_LINK = "2202208186522703"
 
@@ -148,7 +147,7 @@ VOICES = {
 }
 LANGUAGES = {"🇷🇺 Русский": "ru"}
 CHARACTER_TRAITS = ["Смелый", "Добрый", "Любопытный", "Весёлый", "Умный"]
-APPEARANCES = ["Волшебник"]
+
 
 async def edge_tts_speak(text, voice="ru-RU-SvetlanaNeural"):
     try:
