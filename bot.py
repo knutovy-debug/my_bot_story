@@ -115,7 +115,7 @@ APPEARANCES = ["Рыцарь", "Фея", "Космонавт", "Пират", "В
 
 async def edge_tts_speak(text, voice="ru-RU-SvetlanaNeural"):
     try:
-        communicate = edge_tts.Communicate(text, voice)
+        communicate = edge_tts.Communicate(text, voice, rate="+5%")
         audio_data = b""
         async for chunk in communicate.stream():
             if chunk["type"] == "audio":
