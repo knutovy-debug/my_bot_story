@@ -3,6 +3,7 @@ import json
 import re
 import asyncio
 import requests
+import random
 from datetime import datetime, date
 
 from openai import OpenAI
@@ -28,7 +29,7 @@ DB_FILE = "stories.json"
 
 def load_db():
     if not os.path.exists(DB_FILE):
-        return {"stories": [], "premium_users": [], "user_stats": {}}
+        return {"stories": [], "premium_users": [], "user_stats": {}, "referrals": {}}
     with open(DB_FILE, "r", encoding="utf-8") as f:
         return json.load(f)
 
@@ -36,7 +37,7 @@ def save_db(db):
     with open(DB_FILE, "w", encoding="utf-8") as f:
         json.dump(db, f, ensure_ascii=False, indent=4)
 
-def save_story(user_id, name, topic, length, moral, language, trait, appearance, story_text):
+def save_story(user_id, name, topic, length, moral, language, trait, appearance, story_text, audio_data=None):
     db = load_db()
     db["stories"].append({
         "id": len(db["stories"]) + 1,
@@ -49,6 +50,7 @@ def save_story(user_id, name, topic, length, moral, language, trait, appearance,
         "trait": trait,
         "appearance": appearance,
         "story_text": story_text,
+        "audio_data": audio_data,
         "created_at": datetime.now().isoformat()
     })
     save_db(db)
@@ -92,9 +94,24 @@ def can_create_story(user_id):
         return True
     return get_user_daily_count(user_id) < 3
 
+# ======== РЕФЕРАЛЬНАЯ СИСТЕМА ========
+def add_referral(user_id, referrer_id):
+    db = load_db()
+    if referrer_id and str(user_id) not in db["referrals"]:
+        db["referrals"][str(user_id)] = str(referrer_id)
+        save_db(db)
+        return True
+    return False
+
 # ======== КЛАВИАТУРА ========
 def get_main_keyboard():
-    keyboard = [[KeyboardButton("📖 Создать сказку")], [KeyboardButton("📚 Мои сказки")], [KeyboardButton("❤️ Поддержать автора")], [KeyboardButton("❓ Помощь")]]
+    keyboard = [
+        [KeyboardButton("📖 Создать сказку")],
+        [KeyboardButton("🎲 Удиви меня")],
+        [KeyboardButton("📚 Мои сказки")],
+        [KeyboardButton("❤️ Поддержать автора")],
+        [KeyboardButton("❓ Помощь")],
+    ]
     return ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
 
 def get_topic_keyboard():
@@ -144,6 +161,7 @@ VOICES = {
 }
 LANGUAGES = {"🇷🇺 Русский": "ru"}
 CHARACTER_TRAITS = ["Смелый", "Добрый", "Любопытный", "Весёлый", "Умный"]
+APPEARANCES = ["Волшебник"]
 
 async def edge_tts_speak(text, voice="ru-RU-SvetlanaNeural"):
     try:
@@ -191,6 +209,8 @@ async def handle_buttons(update, context):
     text = update.message.text
     if text == "📖 Создать сказку":
         await story_start(update, context)
+    elif text == "🎲 Удиви меня":
+        await random_story(update, context)
     elif text == "📚 Мои сказки":
         await my_stories(update, context)
     elif text == "❤️ Поддержать автора":
@@ -218,6 +238,65 @@ async def story_start(update, context):
     context.user_data['conversation'] = True
     await update.message.reply_text("📖 Напиши имя ребёнка:")
     return NAME
+
+async def random_story(update, context):
+    user_id = update.effective_user.id
+    if not can_create_story(user_id):
+        await update.message.reply_text(
+            f"⚠️ Вы исчерпали лимит на сегодня (3 сказки).\n\n"
+            f"💳 Поддержите автора, чтобы получить безлимит:\n"
+            f"Карта: `{CARD_NUMBER}`\n\n"
+            f"После оплаты напишите «Оплатил»!",
+            parse_mode="Markdown",
+            reply_markup=get_main_keyboard()
+        )
+        return -1
+    context.user_data['conversation'] = True
+    name = random.choice(["Аня", "Максим", "Соня", "Тимур"])
+    topic = random.choice(["Космос", "Динозавры", "Принцессы", "Пираты", "Феи", "Лесные зверята", "Новый год", "Рыцари", "Подводный мир"])
+    length = random.choice(["короткая", "средняя", "длинная"])
+    moral = random.choice(["дружба", "смелость", "доброта", "честность", "семья", "любознательность", "терпение"])
+    language = "ru"
+    trait = random.choice(CHARACTER_TRAITS)
+    voice = random.choice(["ru-RU-DmitryNeural", "ru-RU-SvetlanaNeural"])
+    context.user_data['name'] = name
+    context.user_data['topic'] = topic
+    context.user_data['length'] = length
+    context.user_data['moral'] = moral
+    context.user_data['language'] = language
+    context.user_data['trait'] = trait
+    context.user_data['voice'] = voice
+    prompt = f"Напиши {length} сказку для ребёнка 5-7 лет. Герой – {name}, {trait}. Тема: {topic}. Мораль: {moral}. Напиши текст БЕЗ использования звёздочек, решёток и каких-либо символов форматирования. Просто чистый текст. Обязательно закончи сказку красивым финалом!"
+    await update.message.reply_text("⏳ Генерирую сказку...")
+    try:
+        response = client.chat.completions.create(
+            model="deepseek-chat",
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=1500,
+            temperature=0.7
+        )
+        story_text = response.choices[0].message.content.strip()
+        story_text = re.sub(r'\*\*', '', story_text)
+        story_text = re.sub(r'\*', '', story_text)
+        story_text = re.sub(r'#', '', story_text)
+        story_text = re.sub(r'---', '', story_text)
+        await update.message.reply_text(f"📖 {story_text}")
+    except Exception as e:
+        await update.message.reply_text(f"❌ Ошибка генерации: {e}")
+        context.user_data['conversation'] = False
+        return -1
+    await update.message.reply_text("🔊 Озвучиваю...")
+    audio_bytes = await edge_tts_speak(story_text, voice=voice)
+    if audio_bytes:
+        await update.message.reply_audio(audio_bytes, caption="✅ Готово!")
+        save_story(update.effective_user.id, name, topic, length, moral, language, trait, "Волшебник", story_text, audio_data=audio_bytes)
+        increment_daily_count(update.effective_user.id)
+    else:
+        await update.message.reply_text("❌ Ошибка озвучки.")
+    keyboard = [[InlineKeyboardButton("📖 Создать ещё сказку", callback_data="new_story")], [InlineKeyboardButton("🏠 Главное меню", callback_data="main_menu")]]
+    await update.message.reply_text("Что хочешь сделать дальше?", reply_markup=InlineKeyboardMarkup(keyboard))
+    context.user_data['conversation'] = False
+    return -1
 
 async def story_name(update, context):
     context.user_data['name'] = update.message.text
@@ -322,7 +401,7 @@ async def story_voice(update, context):
     audio_bytes = await edge_tts_speak(story_text, voice=voice_name)
     if audio_bytes:
         await update.message.reply_audio(audio_bytes, caption="✅ Готово!")
-        save_story(update.effective_user.id, name, topic, length, moral, language, trait, appearance, story_text)
+        save_story(update.effective_user.id, name, topic, length, moral, language, trait, "Волшебник", story_text, audio_data=audio_bytes)
         increment_daily_count(update.effective_user.id)
     else:
         await update.message.reply_text("❌ Ошибка озвучки.")
