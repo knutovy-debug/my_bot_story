@@ -299,7 +299,7 @@ async def story_voice(update, context):
     moral = context.user_data['moral']
     language = context.user_data['language']
     trait = context.user_data['trait']
-    prompt = f"Напиши {length} сказку для ребёнка 5-7 лет. Герой – {name}, {trait}, {appearance}. Тема: {topic}. Мораль: {moral}. Напиши текст БЕЗ использования звёздочек, решёток и каких-либо символов форматирования. Просто чистый текст. Обязательно закончи сказку красивым финалом!"
+    prompt = f"Напиши {length} сказку для ребёнка 5-7 лет. Герой – {name}, {trait}. Тема: {topic}. Мораль: {moral}. Напиши текст БЕЗ использования звёздочек, решёток и каких-либо символов форматирования. Просто чистый текст. Обязательно закончи сказку красивым финалом!"
     await update.message.reply_text("⏳ Генерирую сказку...")
     try:
         response = client.chat.completions.create(
