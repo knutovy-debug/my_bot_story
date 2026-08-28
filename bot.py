@@ -1,5 +1,6 @@
 import os
 import json
+import re
 import asyncio
 import requests
 from datetime import datetime, date
@@ -277,7 +278,6 @@ async def story_voice(update, context):
     
     # Добавляем паузу для более живой озвучки
     import re
-    story_text = re.sub(r'(?<=[.!?])\s+', '... ', story_text)
     await update.message.reply_text("⏳ Генерирую сказку...")
     try:
         # Генерация через DeepSeek
