@@ -12,7 +12,7 @@ from telegram import Update, ReplyKeyboardMarkup, KeyboardButton, InlineKeyboard
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ConversationHandler, ContextTypes, CallbackQueryHandler
 
 # ======== ТОКЕНЫ ========
-TELEGRAM_BOT_TOKEN = "8434163956:AAH_cUX7uvV46QX5d6XWUxWSMusHDApsOpU"
+TELEGRAM_BOT_TOKEN = "8434163956:AAFsId_CNRX2rkCBH4_gsIrWxa99k1ohUsA"
 OPENAI_API_KEY = "sk-5172653204024fcaa7e26de04f04ec47K"
 
 CARD_NUMBER = "2202208186522703"
