@@ -37,6 +37,32 @@ def save_db(db):
     with open(DB_FILE, "w", encoding="utf-8") as f:
         json.dump(db, f, ensure_ascii=False, indent=4)
 
+def save_story(user_id, name, topic, length, moral, language, trait, appearance, story_text):
+    db = load_db()
+    db["stories"].append({
+        "id": len(db["stories"]) + 1,
+        "user_id": user_id,
+        "name": name,
+        "topic": topic,
+        "length": length,
+        "moral": moral,
+        "language": language,
+        "trait": trait,
+        "appearance": appearance,
+        "story_text": story_text,
+        "created_at": datetime.now().isoformat()
+    })
+    save_db(db)
+
+def get_user_stories(user_id):
+    db = load_db()
+    return [s for s in db["stories"] if s["user_id"] == user_id][::-1]
+
+def delete_story(story_id, user_id):
+    db = load_db()
+    db["stories"] = [s for s in db["stories"] if not (s["id"] == story_id and s["user_id"] == user_id)]
+    save_db(db)
+
 # ======== ФУНКЦИИ ПОДПИСКИ ========
 def is_premium(user_id):
     db = load_db()
@@ -175,16 +201,6 @@ async def handle_buttons(update, context):
         await help_command(update, context)
     else:
         await update.message.reply_text("Напиши /start.", reply_markup=get_main_keyboard())
-
-# ======== СТАТИСТИКА И БАЗА ========
-def get_user_stories(user_id):
-    db = load_db()
-    return [s for s in db["stories"] if s["user_id"] == user_id][::-1]
-
-def delete_story(story_id, user_id):
-    db = load_db()
-    db["stories"] = [s for s in db["stories"] if not (s["id"] == story_id and s["user_id"] == user_id)]
-    save_db(db)
 
 # ======== ДИАЛОГ ========
 NAME, TOPIC, LENGTH, MORAL, LANGUAGE, TRAIT, APPEARANCE, VOICE = range(8)
