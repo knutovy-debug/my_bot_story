@@ -24,6 +24,17 @@ client = OpenAI(
     base_url="https://api.deepseek.com"
 )
 
+# ======== ФУНКЦИЯ ГЕНЕРАЦИИ КАРТИНОК ========
+async def generate_image(prompt):
+    try:
+        url = f"https://image.pollinations.ai/prompt/{prompt}?width=512&height=512&nologo=true"
+        response = requests.get(url, timeout=30)
+        if response.status_code == 200:
+            return response.content
+    except:
+        pass
+    return None
+
 # ======== БАЗА ДАННЫХ (JSON) ========
 DB_FILE = "stories.json"
 
