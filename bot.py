@@ -17,6 +17,7 @@ TELEGRAM_BOT_TOKEN = "8434163956:AAFsId_CNRX2rkCBH4_gsIrWxa99k1ohUsA"
 OPENAI_API_KEY = "sk-5172653204024fcaa7e26de04f04ec47"
 CARD_NUMBER = "2202208186522703"
 DONATE_LINK = "2202208186522703"
+PRICE = "199 рублей"  # ← ЦЕНА ПОДПИСКИ
 
 # ======== ИНИЦИАЛИЗАЦИЯ DEEPSEEK ========
 client = OpenAI(
@@ -71,30 +72,18 @@ def is_premium(user_id):
     db = load_db()
     return str(user_id) in db["premium_users"]
 
-def get_user_daily_count(user_id):
+def get_user_story_count(user_id):
     db = load_db()
-    today = date.today().isoformat()
-    if str(user_id) not in db["user_stats"]:
-        db["user_stats"][str(user_id)] = {"daily_count": 0, "last_reset": today}
-        save_db(db)
-        return 0
-    if db["user_stats"][str(user_id)]["last_reset"] != today:
-        db["user_stats"][str(user_id)] = {"daily_count": 0, "last_reset": today}
-        save_db(db)
-        return 0
-    return db["user_stats"][str(user_id)]["daily_count"]
-
-def increment_daily_count(user_id):
-    db = load_db()
-    if str(user_id) not in db["user_stats"]:
-        db["user_stats"][str(user_id)] = {"daily_count": 0, "last_reset": date.today().isoformat()}
-    db["user_stats"][str(user_id)]["daily_count"] += 1
-    save_db(db)
+    count = 0
+    for s in db["stories"]:
+        if s["user_id"] == user_id:
+            count += 1
+    return count
 
 def can_create_story(user_id):
     if is_premium(user_id):
         return True
-    return get_user_daily_count(user_id) < 3
+    return get_user_story_count(user_id) < 3
 
 # ======== КЛАВИАТУРА ========
 def get_main_keyboard():
@@ -220,8 +209,9 @@ async def story_start(update, context):
     user_id = update.effective_user.id
     if not can_create_story(user_id):
         await update.message.reply_text(
-            f"⚠️ Вы исчерпали лимит на сегодня (3 сказки).\n\n"
-            f"💳 Поддержите автора, чтобы получить безлимит:\n"
+            f"⚠️ Вы использовали все 3 бесплатные сказки.\n\n"
+            f"💳 Чтобы продолжить, оплатите подписку:\n"
+            f"Цена: {PRICE}\n"
             f"Карта: `{CARD_NUMBER}`\n\n"
             f"После оплаты напишите «Оплатил»!",
             parse_mode="Markdown",
@@ -236,8 +226,9 @@ async def random_story(update, context):
     user_id = update.effective_user.id
     if not can_create_story(user_id):
         await update.message.reply_text(
-            f"⚠️ Вы исчерпали лимит на сегодня (3 сказки).\n\n"
-            f"💳 Поддержите автора, чтобы получить безлимит:\n"
+            f"⚠️ Вы использовали все 3 бесплатные сказки.\n\n"
+            f"💳 Чтобы продолжить, оплатите подписку:\n"
+            f"Цена: {PRICE}\n"
             f"Карта: `{CARD_NUMBER}`\n\n"
             f"После оплаты напишите «Оплатил»!",
             parse_mode="Markdown",
