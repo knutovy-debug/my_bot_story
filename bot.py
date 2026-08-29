@@ -109,8 +109,7 @@ def get_main_keyboard():
         [KeyboardButton("📚 Мои сказки")],
         [KeyboardButton("❤️ Поддержать автора")],
         [KeyboardButton("❓ Помощь")],
-        [KeyboardButton("📢 Наш канал")],
-    ]
+        [KeyboardButton("📢 Наш канал")],]
     return ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
 
 def get_payment_keyboard():
@@ -180,13 +179,6 @@ async def help_command(update, context):
     await update.message.reply_text("Нажми /start и выбери «Создать сказку».", reply_markup=get_main_keyboard())
 async def donate(update, context):
     await update.message.reply_text(f"❤️ Спасибо! Карта: {CARD_NUMBER}\nСсылка: {DONATE_LINK}", parse_mode="Markdown", reply_markup=get_main_keyboard())
-async def open_channel(update, context):
-    await update.message.reply_text(
-        "📢 Подписывайтесь на наш канал!",
-        reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton("📢 Открыть канал", url="https://t.me/твой_username_канала")]
-        ])
-    )
 async def my_stories(update, context):
     user_id = update.effective_user.id
     stories = get_user_stories(user_id)
@@ -283,11 +275,10 @@ async def handle_buttons(update, context):
         await donate(update, context)
     elif text == "❓ Помощь":
         await help_command(update, context)
-    elif text == "📢 Наш канал":
-        await open_channel(update, context)
     else:
         await update.message.reply_text("Напиши /start.", reply_markup=get_main_keyboard())
-
+    elif text == "📢 Наш канал":
+    await open_channel(update, context)
 # ======== ДИАЛОГ ========
 NAME, TOPIC, MORAL, LANGUAGE, TRAIT, VOICE = range(6)
 
