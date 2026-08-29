@@ -213,8 +213,7 @@ async def payment_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"Для оплаты переведите {price} на карту:\n"
         f"`{CARD_NUMBER}`\n"
         f"После перевода напишите слово «Оплатил»",
-        parse_mode="Markdown",
-        reply_markup=get_main_keyboard()
+        parse_mode="Markdown"
     )
 
 # ======== ОБРАБОТКА "ОПЛАТИЛ" (Уведомление для тебя) ========
@@ -341,8 +340,8 @@ async def random_story(update, context):
         response = client.chat.completions.create(
             model="deepseek-chat",
             messages=[{"role": "user", "content": prompt}],
-            max_tokens=1200,
-            temperature=0.6
+            max_tokens=800,
+            temperature=0.7
         )
         story_text = response.choices[0].message.content.strip()
         story_text = re.sub(r'\*\*', '', story_text)
