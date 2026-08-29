@@ -10,7 +10,7 @@ import edge_tts
 
 # ===== ТОКЕНЫ (ПРОВЕРЬ ЭТИ СТРОКИ) =====
 TELEGRAM_BOT_TOKEN = "8434163956:AAGlP2uk4zpAmLFGpTh8XtL5AWNJyiemgEE"
-OPENAI_API_KEY = "sk-5172653204024fcaa7e26de04f04ec47"
+OPENAI_API_KEY = "sk-132ee0cd4cf14c10b389b7680cfcfe37"
 ADMIN_ID = "8434163956"
 
 openai.api_key = OPENAI_API_KEY
