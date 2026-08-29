@@ -53,11 +53,9 @@ def save_story(user_id, name, topic, length, moral, language, trait, appearance,
         "trait": trait,
         "appearance": appearance,
         "story_text": story_text,
-        "audio_data": audio_data,
         "created_at": datetime.now().isoformat()
     })
     save_db(db)
-
 def get_user_stories(user_id):
     db = load_db()
     return [s for s in db["stories"] if s["user_id"] == user_id][::-1]
