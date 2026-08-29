@@ -84,6 +84,19 @@ def can_create_story(user_id):
     if is_premium(user_id):
         return True
     return get_user_story_count(user_id) < 3
+    def increment_daily_count(user_id):
+    db = load_db()
+    if str(user_id) not in db["user_stats"]:
+        db["user_stats"][str(user_id)] = {"daily_count": 0, "last_reset": date.today().isoformat()}
+    db["user_stats"][str(user_id)]["daily_count"] += 1
+    save_db(db)
+    def get_user_story_count(user_id):
+    db = load_db()
+    count = 0
+    for s in db["stories"]:
+        if s["user_id"] == user_id:
+            count += 1
+    return count
 
 # ======== КЛАВИАТУРА ========
 def get_main_keyboard():
