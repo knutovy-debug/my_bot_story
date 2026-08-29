@@ -21,7 +21,7 @@ CARD_NUMBER = "2202208186522703"
 DONATE_LINK = "2202208186522703"
 MONTHLY_PRICE = "299 рублей"
 YEARLY_PRICE = "1990 рублей"
-ADMIN_ID = "1177629279"  # <--- ТВОЙ ЛИЧНЫЙ ID
+ADMIN_ID = "1177629279"
 
 # ======== ИНИЦИАЛИЗАЦИЯ DEEPSEEK ========
 client = OpenAI(
@@ -34,29 +34,27 @@ DB_FILE = "stories.json"
 
 def load_db():
     if not os.path.exists(DB_FILE):
-        return {"stories": [], "premium_users": {}, "user_stats": {}, "pending_payments": {}, "payment_requests": {}}
+        return {"stories": [], "premium_users": {}, "user_stats": {}, "payment_data": {}}
     try:
         with open(DB_FILE, "r", encoding="utf-8") as f:
             return json.load(f)
     except:
-        return {"stories": [], "premium_users": {}, "user_stats": {}, "pending_payments": {}, "payment_requests": {}}
+        return {"stories": [], "premium_users": {}, "user_stats": {}, "payment_data": {}}
 
 def save_db(db):
     with open(DB_FILE, "w", encoding="utf-8") as f:
         json.dump(db, f, ensure_ascii=False, indent=4)
 
-def save_story(user_id, name, topic, length, moral, language, trait, appearance, story_text):
+def save_story(user_id, name, topic, moral, language, trait, story_text):
     db = load_db()
     db["stories"].append({
         "id": len(db["stories"]) + 1,
         "user_id": user_id,
         "name": name,
         "topic": topic,
-        "length": length,
         "moral": moral,
         "language": language,
         "trait": trait,
-        "appearance": appearance,
         "story_text": story_text,
         "created_at": datetime.now().isoformat()
     })
@@ -87,13 +85,6 @@ def get_user_story_count(user_id):
             count += 1
     return count
 
-def increment_daily_count(user_id):
-    db = load_db()
-    if str(user_id) not in db["user_stats"]:
-        db["user_stats"][str(user_id)] = {"daily_count": 0, "last_reset": date.today().isoformat()}
-    db["user_stats"][str(user_id)]["daily_count"] += 1
-    save_db(db)
-
 def can_create_story(user_id):
     if is_premium(user_id):
         return True
@@ -118,14 +109,8 @@ def get_main_keyboard():
 
 def get_payment_keyboard():
     keyboard = [
-        [InlineKeyboardButton("💳 Оплатить месяц (299 руб.)", callback_data="pay_month")],
-        [InlineKeyboardButton("💳 Оплатить год (1990 руб.)", callback_data="pay_year")],
-    ]
-    return InlineKeyboardMarkup(keyboard)
-
-def get_admin_keyboard(user_id):
-    keyboard = [
-        [InlineKeyboardButton("✅ Подтвердить оплату", callback_data=f"confirm_{user_id}")],
+        [InlineKeyboardButton("💳 Оплатить месяц (299 руб.)", callback_data="month_99")],
+        [InlineKeyboardButton("💳 Оплатить год (1990 руб.)", callback_data="year_1990")],
     ]
     return InlineKeyboardMarkup(keyboard)
 
@@ -169,7 +154,6 @@ VOICES = {
 }
 LANGUAGES = {"🇷🇺 Русский": "ru"}
 CHARACTER_TRAITS = ["Смелый", "Добрый", "Любопытный", "Весёлый", "Умный"]
-APPEARANCES = ["Волшебник"]
 
 async def edge_tts_speak(text, voice="ru-RU-SvetlanaNeural"):
     try:
@@ -200,67 +184,79 @@ async def my_stories(update, context):
         keyboard = [[InlineKeyboardButton("🗑️ Удалить", callback_data=f"delete_{story['id']}")]]
         await update.message.reply_text(f"📖 {story['name']} – {story['topic']}", reply_markup=InlineKeyboardMarkup(keyboard))
 
-# ======== ОБРАБОТКА ОПЛАТЫ (Ожидание подтверждения) ========
-async def handle_payment_message(update, context):
+# ======== ОБРАБОТКА ОПЛАТЫ (Кнопки оплаты) ========
+async def payment_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
     user_id = update.effective_user.id
-    if "оплатил" in update.message.text.lower():
-        db = load_db()
-        if str(user_id) in db["pending_payments"]:
-            plan = db["pending_payments"][str(user_id)]
-            if plan == "month":
-                db["payment_requests"][str(user_id)] = {"plan": "month", "status": "pending"}
-                save_db(db)
-                await update.message.reply_text("📩 Заявка отправлена! Ожидайте подтверждения оплаты от администратора.", reply_markup=get_main_keyboard())
-                await context.bot.send_message(
-                    chat_id=ADMIN_ID,
-                    text=f"💳 НОВАЯ ЗАЯВКА НА ОПЛАТУ!\n\n"
-                         f"👤 Пользователь: {user_id}\n"
-                         f"📅 Тариф: Месяц (299 руб.)\n"
-                         f"Статус: Ожидает подтверждения\n\n"
-                         f"👆 Нажмите кнопку ниже для подтверждения",
-                    reply_markup=get_admin_keyboard(user_id)
-                )
-            elif plan == "year":
-                db["payment_requests"][str(user_id)] = {"plan": "year", "status": "pending"}
-                save_db(db)
-                await update.message.reply_text("📩 Заявка отправлена! Ожидайте подтверждения оплаты от администратора.", reply_markup=get_main_keyboard())
-                await context.bot.send_message(
-                    chat_id=ADMIN_ID,
-                    text=f"💳 НОВАЯ ЗАЯВКА НА ОПЛАТУ!\n\n"
-                         f"👤 Пользователь: {user_id}\n"
-                         f"📅 Тариф: Год (1990 руб.)\n"
-                         f"Статус: Ожидает подтверждения\n\n"
-                         f"👆 Нажмите кнопку ниже для подтверждения",
-                    reply_markup=get_admin_keyboard(user_id)
-                )
-        else:
-            await update.message.reply_text("⚠️ Вы ещё не выбрали тариф. Нажмите «Создать сказку», чтобы увидеть тарифы.", reply_markup=get_main_keyboard())
-    return -1
+    data = query.data
 
-# ======== КОМАНДА ПОДТВЕРЖДЕНИЯ ОПЛАТЫ (ТОЛЬКО ДЛЯ ТЕБЯ) ========
-async def confirm_payment(update, context):
-    user_id = update.effective_user.id
-    if str(user_id) != ADMIN_ID:
-        await update.message.reply_text("⛔ Только для администратора.")
+    if data.startswith("confirm_") or data.startswith("reject_"):
         return
-    if not context.args:
-        await update.message.reply_text("⚠️ Использование: /confirm 123456789")
-        return
-    target_user_id = str(context.args[0])
-    db = load_db()
-    if target_user_id in db["payment_requests"]:
-        plan = db["payment_requests"][target_user_id]["plan"]
-        if plan == "month":
-            activate_subscription(int(target_user_id), 30)
-            await update.message.reply_text(f"✅ Подписка на 1 месяц активирована для пользователя {target_user_id}!")
-        elif plan == "year":
-            activate_subscription(int(target_user_id), 365)
-            await update.message.reply_text(f"✅ Подписка на 1 год активирована для пользователя {target_user_id}!")
-        del db["payment_requests"][target_user_id]
-        del db["pending_payments"][target_user_id]
-        save_db(db)
+
+    if data == "month_99":
+        price, period = "99 ₽", "1 месяц"
     else:
-        await update.message.reply_text("⚠️ Заявка от этого пользователя не найдена.")
+        price, period = "1990 ₽", "1 год"
+
+    db = load_db()
+    db["payment_data"][str(user_id)] = {"price": price, "period": period}
+    save_db(db)
+
+    await query.edit_message_text(
+        f"💳 Вы выбрали подписку на {period} за {price}!\n"
+        f"Для оплаты переведите {price} на карту:\n"
+        f"`{CARD_NUMBER}`\n"
+        f"После перевода напишите слово «Оплатил»",
+        parse_mode="Markdown",
+        reply_markup=get_main_keyboard()
+    )
+
+# ======== ОБРАБОТКА "ОПЛАТИЛ" (Уведомление для тебя) ========
+async def payment_message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+    text = update.message.text
+
+    if "оплатил" in text.lower():
+        db = load_db()
+        payment_info = db["payment_data"].get(str(user_id), {"price": "Неизвестно", "period": "Неизвестно"})
+
+        await context.bot.send_message(
+            chat_id=ADMIN_ID,
+            text=f"💳 Новый запрос на оплату!\n"
+                 f"Пользователь: {user_id} (@{update.effective_user.username})\n"
+                 f"Тариф: {payment_info['period']} за {payment_info['price']}\n"
+                 f"Пожалуйста, проверьте перевод и нажмите кнопку",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("✅ Подтвердить", callback_data=f"confirm_{user_id}")],
+                [InlineKeyboardButton("❌ Отклонить", callback_data=f"reject_{user_id}")]
+            ])
+        )
+        await update.message.reply_text("Спасибо! Ваш запрос отправлен администратору на подтверждение.")
+
+    else:
+        await update.message.reply_text("Сначала выберите тариф, нажав «Создать сказку».")
+
+# ======== ОБРАБОТКА ОТВЕТА (Подтверждение/Отклонение) ========
+async def confirm_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    user_id = update.effective_user.id
+
+    if str(user_id) != ADMIN_ID:
+        await query.answer("Только для администратора!", show_alert=True)
+        return
+
+    data = query.data
+    target_user = data.split("_")[1]
+
+    if data.startswith("confirm_"):
+        activate_subscription(int(target_user), 30)
+        await query.edit_message_text(f"✅ Подписка для пользователя {target_user} активирована!")
+        await context.bot.send_message(chat_id=target_user, text="✅ Оплата подтверждена! Теперь у вас безлимит на 1 месяц!")
+    elif data.startswith("reject_"):
+        await query.edit_message_text(f"❌ Оплата от пользователя {target_user} отклонена!")
+        await context.bot.send_message(chat_id=target_user, text="❌ Оплата отклонена. Попробуйте еще раз.")
 
 # ======== ОБРАБОТЧИК КНОПОК ========
 async def handle_buttons(update, context):
@@ -285,14 +281,13 @@ async def story_start(update, context):
     user_id = update.effective_user.id
     if not can_create_story(user_id):
         db = load_db()
-        if str(user_id) not in db["pending_payments"]:
-            db["pending_payments"][str(user_id)] = None
+        if str(user_id) not in db["payment_data"]:
+            db["payment_data"][str(user_id)] = {"price": "Неизвестно", "period": "Неизвестно"}
             save_db(db)
         await update.message.reply_text(
             f"⚠️ Вы использовали все 3 бесплатные сказки.\n\n"
             f"💳 Чтобы продолжить, оплатите подписку:\n"
-            f"Цена: {MONTHLY_PRICE} / месяц\n"
-            f"Цена: {YEARLY_PRICE} / год\n"
+            f"Можно выбрать: {MONTHLY_PRICE} / месяц или {YEARLY_PRICE} / год\n"
             f"Карта: `{CARD_NUMBER}`\n\n"
             f"Выберите тариф ниже и напишите «Оплатил»!",
             parse_mode="Markdown",
@@ -307,14 +302,13 @@ async def random_story(update, context):
     user_id = update.effective_user.id
     if not can_create_story(user_id):
         db = load_db()
-        if str(user_id) not in db["pending_payments"]:
-            db["pending_payments"][str(user_id)] = None
+        if str(user_id) not in db["payment_data"]:
+            db["payment_data"][str(user_id)] = {"price": "Неизвестно", "period": "Неизвестно"}
             save_db(db)
         await update.message.reply_text(
             f"⚠️ Вы использовали все 3 бесплатные сказки.\n\n"
             f"💳 Чтобы продолжить, оплатите подписку:\n"
-            f"Цена: {MONTHLY_PRICE} / месяц\n"
-            f"Цена: {YEARLY_PRICE} / год\n"
+            f"Можно выбрать: {MONTHLY_PRICE} / месяц или {YEARLY_PRICE} / год\n"
             f"Карта: `{CARD_NUMBER}`\n\n"
             f"Выберите тариф ниже и напишите «Оплатил»!",
             parse_mode="Markdown",
@@ -357,7 +351,7 @@ async def random_story(update, context):
     audio_bytes = await edge_tts_speak(story_text, voice=voice)
     if audio_bytes:
         await update.message.reply_audio(audio_bytes, caption="✅ Готово!")
-        save_story(update.effective_user.id, name, topic, "короткая", moral, language, trait, "Волшебник", story_text)
+        save_story(update.effective_user.id, name, topic, moral, language, trait, story_text)
         increment_daily_count(update.effective_user.id)
     else:
         await update.message.reply_text("❌ Ошибка озвучки.")
@@ -460,7 +454,7 @@ async def story_voice(update, context):
     audio_bytes = await edge_tts_speak(story_text, voice=voice_name)
     if audio_bytes:
         await update.message.reply_audio(audio_bytes, caption="✅ Готово!")
-        save_story(update.effective_user.id, name, topic, "короткая", moral, language, trait, "Волшебник", story_text)
+        save_story(update.effective_user.id, name, topic, moral, language, trait, story_text)
         increment_daily_count(update.effective_user.id)
     else:
         await update.message.reply_text("❌ Ошибка озвучки.")
@@ -473,30 +467,6 @@ async def cancel(update, context):
     await update.message.reply_text("Отменено.", reply_markup=get_main_keyboard())
     return -1
 
-async def handle_inline(update, context):
-    query = update.callback_query
-    await query.answer()
-    data = query.data
-    if data == "new_story":
-        await query.message.reply_text("Начинаем новую сказку!")
-        await story_start(query, context)
-    elif data == "main_menu":
-        await query.message.reply_text("Главное меню.", reply_markup=get_main_keyboard())
-    elif data.startswith("delete_"):
-        story_id = int(data.split("_")[1])
-        delete_story(story_id, update.effective_user.id)
-        await query.message.reply_text("🗑️ Сказка удалена.")
-    elif data == "pay_month":
-        db = load_db()
-        db["pending_payments"][str(update.effective_user.id)] = "month"
-        save_db(db)
-        await query.message.reply_text("💳 Вы выбрали подписку на 1 месяц (299 руб.)\n\nПожалуйста, переведите 299 рублей на карту:\n`2202208186522703`\n\nПосле оплаты напишите «Оплатил»!", parse_mode="Markdown", reply_markup=get_main_keyboard())
-    elif data == "pay_year":
-        db = load_db()
-        db["pending_payments"][str(update.effective_user.id)] = "year"
-        save_db(db)
-        await query.message.reply_text("💳 Вы выбрали подписку на 1 год (1990 руб.)\n\nПожалуйста, переведите 1990 рублей на карту:\n`2202208186522703`\n\nПосле оплаты напишите «Оплатил»!", parse_mode="Markdown", reply_markup=get_main_keyboard())
-
 # ======== ИНИЦИАЛИЗАЦИЯ БОТА ========
 app = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
 
@@ -504,8 +474,7 @@ app.add_handler(CommandHandler("start", start))
 app.add_handler(CommandHandler("help", help_command))
 app.add_handler(CommandHandler("donate", donate))
 app.add_handler(CommandHandler("my_stories", my_stories))
-app.add_handler(CommandHandler("confirm", confirm_payment))
-app.add_handler(MessageHandler(filters.Regex("оплатил") & ~filters.COMMAND, handle_payment_message))
+app.add_handler(MessageHandler(filters.Regex("оплатил") & ~filters.COMMAND, payment_message_handler))
 
 conv = ConversationHandler(
     entry_points=[CommandHandler("story", story_start), MessageHandler(filters.Regex("📖 Создать сказку"), story_start)],
@@ -521,7 +490,8 @@ conv = ConversationHandler(
 )
 app.add_handler(conv)
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_buttons))
-app.add_handler(CallbackQueryHandler(handle_inline))
+app.add_handler(CallbackQueryHandler(payment_handler))
+app.add_handler(CallbackQueryHandler(confirm_handler))
 
 # ======== ГОТОВО! ========
 app.run_polling(allowed_updates=Update.ALL_TYPES)
