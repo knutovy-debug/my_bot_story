@@ -19,7 +19,7 @@ OPENAI_API_KEY = "sk-132ee0cd4cf14c10b389b7680cfcfe37"
 # ======== ОПЛАТА И РЕКВИЗИТЫ ========
 CARD_NUMBER = "2202208186522703"
 DONATE_LINK = "2202208186522703"
-ADMIN_ID = "1177629279"
+ADMIN_ID = "8434163956"
 
 # ======== ИНИЦИАЛИЗАЦИЯ DEEPSEEK ========
 client = OpenAI(
@@ -104,22 +104,12 @@ def activate_subscription(user_id, days):
 # ======== КЛАВИАТУРА ========
 def get_main_keyboard():
     keyboard = [
-         keyboard = [
         [KeyboardButton("📖 Создать сказку")],
         [KeyboardButton("🎲 Удиви меня")],
         [KeyboardButton("📚 Мои сказки")],
         [KeyboardButton("❤️ Поддержать автора")],
         [KeyboardButton("❓ Помощь")],
-        [KeyboardButton("📢 Наш канал")],  # Новая кнопка
-    ]
-   def get_main_keyboard():
-    keyboard = [
-        [KeyboardButton("📖 Создать сказку")],
-        [KeyboardButton("🎲 Удиви меня")],
-        [KeyboardButton("📚 Мои сказки")],
-        [KeyboardButton("❤️ Поддержать автора")],
-        [KeyboardButton("❓ Помощь")],
-        [KeyboardButton("📢 Наш канал")],  # Новая кнопка
+        [KeyboardButton("📢 Наш канал")],
     ]
     return ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
 
@@ -190,6 +180,13 @@ async def help_command(update, context):
     await update.message.reply_text("Нажми /start и выбери «Создать сказку».", reply_markup=get_main_keyboard())
 async def donate(update, context):
     await update.message.reply_text(f"❤️ Спасибо! Карта: {CARD_NUMBER}\nСсылка: {DONATE_LINK}", parse_mode="Markdown", reply_markup=get_main_keyboard())
+async def open_channel(update, context):
+    await update.message.reply_text(
+        "📢 Подписывайтесь на наш канал!",
+        reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton("📢 Открыть канал", url="https://t.me/твой_username_канала")]
+        ])
+    )
 async def my_stories(update, context):
     user_id = update.effective_user.id
     stories = get_user_stories(user_id)
@@ -286,22 +283,14 @@ async def handle_buttons(update, context):
         await donate(update, context)
     elif text == "❓ Помощь":
         await help_command(update, context)
-    # ВАЖНО: Если текст "Оплатил" - отправляем его в обработчик оплаты
-    elif "оплатил" in text.lower():
-        await payment_message_handler(update, context)
+    elif text == "📢 Наш канал":
+        await open_channel(update, context)
     else:
         await update.message.reply_text("Напиши /start.", reply_markup=get_main_keyboard())
-elif text == "📢 Наш канал":
-    await open_channel(update, context)
+
 # ======== ДИАЛОГ ========
 NAME, TOPIC, MORAL, LANGUAGE, TRAIT, VOICE = range(6)
-async def open_channel(update, context):
-    await update.message.reply_text(
-        "📢 Подписывайтесь на наш канал! Там мы публикуем лучшие сказки:",
-        reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton("📢 Открыть канал", url="https://t.me/твой_username_канала")]
-        ])
-    )
+
 async def story_start(update, context):
     user_id = update.effective_user.id
     if not can_create_story(user_id):
@@ -517,6 +506,8 @@ conv = ConversationHandler(
 )
 app.add_handler(conv)
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_buttons))
+app.add_handler(CallbackQueryHandler(payment_handler))
 app.add_handler(CallbackQueryHandler(confirm_handler))
+
 # ======== ГОТОВО! ========
 app.run_polling(allowed_updates=Update.ALL_TYPES)
