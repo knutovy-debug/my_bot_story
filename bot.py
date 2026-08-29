@@ -9,7 +9,7 @@ import openai
 import edge_tts
 
 # ===== ТОКЕНЫ (ПРОВЕРЬ ЭТИ СТРОКИ) =====
-TELEGRAM_BOT_TOKEN = "8434163956:AAFsId_CNRX2rkCBH4_gsIrWxa99k1ohUsA"
+TELEGRAM_BOT_TOKEN = "8434163956:AAGlP2uk4zpAmLFGpTh8XtL5AWNJyiemgEE"
 OPENAI_API_KEY = "sk-5172653204024fcaa7e26de04f04ec47"
 ADMIN_ID = "8434163956"
 
