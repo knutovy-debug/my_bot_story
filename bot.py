@@ -21,7 +21,7 @@ CARD_NUMBER = "2202208186522703"
 DONATE_LINK = "2202208186522703"
 MONTHLY_PRICE = "299 рублей"
 YEARLY_PRICE = "1990 рублей"
-ADMIN_ID = "1177629279"  # <--- ВСТАВЬ СВОЙ ID СЮДА (узнаёшь у @userinfobot)
+ADMIN_ID = "1177629279"  # <--- ВСТАВЬ СВОЙ ID СЮДА
 
 # ======== ИНИЦИАЛИЗАЦИЯ DEEPSEEK ========
 client = OpenAI(
@@ -86,6 +86,13 @@ def get_user_story_count(user_id):
         if s["user_id"] == user_id:
             count += 1
     return count
+
+def increment_daily_count(user_id):
+    db = load_db()
+    if str(user_id) not in db["user_stats"]:
+        db["user_stats"][str(user_id)] = {"daily_count": 0, "last_reset": date.today().isoformat()}
+    db["user_stats"][str(user_id)]["daily_count"] += 1
+    save_db(db)
 
 def can_create_story(user_id):
     if is_premium(user_id):
@@ -183,11 +190,7 @@ async def start(update, context):
 async def help_command(update, context):
     await update.message.reply_text("Нажми /start и выбери «Создать сказку».", reply_markup=get_main_keyboard())
 async def donate(update, context):
-    await update.message.reply_text(
-        f"❤️ Спасибо! Карта: {CARD_NUMBER}\nСсылка: {DONATE_LINK}",
-        parse_mode="Markdown",
-        reply_markup=get_main_keyboard()
-    )
+    await update.message.reply_text(f"❤️ Спасибо! Карта: {CARD_NUMBER}\nСсылка: {DONATE_LINK}", parse_mode="Markdown", reply_markup=get_main_keyboard())
 async def my_stories(update, context):
     user_id = update.effective_user.id
     stories = get_user_stories(user_id)
@@ -223,14 +226,11 @@ async def confirm_payment(update, context):
     if str(user_id) != ADMIN_ID:
         await update.message.reply_text("⛔ Только для администратора.")
         return
-
     if not context.args:
         await update.message.reply_text("⚠️ Использование: /confirm 123456789")
         return
-
     target_user_id = str(context.args[0])
     db = load_db()
-
     if target_user_id in db["payment_requests"]:
         plan = db["payment_requests"][target_user_id]["plan"]
         if plan == "month":
