@@ -21,9 +21,7 @@ CARD_NUMBER = "2202208186522703"
 DONATE_LINK = "2202208186522703"
 MONTHLY_PRICE = "299 рублей"
 YEARLY_PRICE = "1990 рублей"
-
-# Твой личный Telegram ID
-ADMIN_ID = "1177629279"
+ADMIN_ID = "1177629279"  # <--- ТВОЙ ЛИЧНЫЙ ID
 
 # ======== ИНИЦИАЛИЗАЦИЯ DEEPSEEK ========
 client = OpenAI(
@@ -106,12 +104,8 @@ def activate_subscription(user_id, days):
     expiration = datetime.now() + timedelta(days=days)
     db["premium_users"][str(user_id)] = {"expiration": expiration.isoformat()}
     save_db(db)
-def get_payment_keyboard():
-    keyboard = [
-        [InlineKeyboardButton("💳 Оплатить месяц (299 руб.)", callback_data="pay_month")],
-        [InlineKeyboardButton("💳 Оплатить год (1990 руб.)", callback_data="pay_year")],
-    ]
-    return InlineKeyboardMarkup(keyboard)
+
+# ======== КЛАВИАТУРА ========
 def get_main_keyboard():
     keyboard = [
         [KeyboardButton("📖 Создать сказку")],
@@ -128,11 +122,7 @@ def get_payment_keyboard():
         [InlineKeyboardButton("💳 Оплатить год (1990 руб.)", callback_data="pay_year")],
     ]
     return InlineKeyboardMarkup(keyboard)
-def get_admin_keyboard(user_id):
-    keyboard = [
-        [InlineKeyboardButton("✅ Подтвердить оплату", callback_data=f"confirm_{user_id}")],
-    ]
-    return InlineKeyboardMarkup(keyboard)
+
 def get_admin_keyboard(user_id):
     keyboard = [
         [InlineKeyboardButton("✅ Подтвердить оплату", callback_data=f"confirm_{user_id}")],
@@ -221,7 +211,6 @@ async def handle_payment_message(update, context):
                 db["payment_requests"][str(user_id)] = {"plan": "month", "status": "pending"}
                 save_db(db)
                 await update.message.reply_text("📩 Заявка отправлена! Ожидайте подтверждения оплаты от администратора.", reply_markup=get_main_keyboard())
-                # ОПОВЕЩЕНИЕ ДЛЯ ТЕБЯ (АДМИНА)
                 await context.bot.send_message(
                     chat_id=ADMIN_ID,
                     text=f"💳 НОВАЯ ЗАЯВКА НА ОПЛАТУ!\n\n"
@@ -235,7 +224,6 @@ async def handle_payment_message(update, context):
                 db["payment_requests"][str(user_id)] = {"plan": "year", "status": "pending"}
                 save_db(db)
                 await update.message.reply_text("📩 Заявка отправлена! Ожидайте подтверждения оплаты от администратора.", reply_markup=get_main_keyboard())
-                # ОПОВЕЩЕНИЕ ДЛЯ ТЕБЯ (АДМИНА)
                 await context.bot.send_message(
                     chat_id=ADMIN_ID,
                     text=f"💳 НОВАЯ ЗАЯВКА НА ОПЛАТУ!\n\n"
@@ -255,14 +243,11 @@ async def confirm_payment(update, context):
     if str(user_id) != ADMIN_ID:
         await update.message.reply_text("⛔ Только для администратора.")
         return
-
     if not context.args:
         await update.message.reply_text("⚠️ Использование: /confirm 123456789")
         return
-
     target_user_id = str(context.args[0])
     db = load_db()
-
     if target_user_id in db["payment_requests"]:
         plan = db["payment_requests"][target_user_id]["plan"]
         if plan == "month":
@@ -292,43 +277,7 @@ async def handle_buttons(update, context):
         await help_command(update, context)
     else:
         await update.message.reply_text("Напиши /start.", reply_markup=get_main_keyboard())
-async def handle_payment_message(update, context):
-    user_id = update.effective_user.id
-    if "оплатил" in update.message.text.lower():
-        db = load_db()
-        if str(user_id) in db["pending_payments"]:
-            plan = db["pending_payments"][str(user_id)]
-            if plan == "month":
-                db["payment_requests"][str(user_id)] = {"plan": "month", "status": "pending"}
-                save_db(db)
-                await update.message.reply_text("📩 Заявка отправлена! Ожидайте подтверждения оплаты от администратора.", reply_markup=get_main_keyboard())
-                # ОПОВЕЩЕНИЕ ДЛЯ ТЕБЯ (АДМИНА)
-                await context.bot.send_message(
-                    chat_id=ADMIN_ID,
-                    text=f"💳 НОВАЯ ЗАЯВКА НА ОПЛАТУ!\n\n"
-                         f"👤 Пользователь: {user_id}\n"
-                         f"📅 Тариф: Месяц (299 руб.)\n"
-                         f"Статус: Ожидает подтверждения\n\n"
-                         f"👆 Нажмите кнопку ниже для подтверждения",
-                    reply_markup=get_admin_keyboard(user_id)
-                )
-            elif plan == "year":
-                db["payment_requests"][str(user_id)] = {"plan": "year", "status": "pending"}
-                save_db(db)
-                await update.message.reply_text("📩 Заявка отправлена! Ожидайте подтверждения оплаты от администратора.", reply_markup=get_main_keyboard())
-                # ОПОВЕЩЕНИЕ ДЛЯ ТЕБЯ (АДМИНА)
-                await context.bot.send_message(
-                    chat_id=ADMIN_ID,
-                    text=f"💳 НОВАЯ ЗАЯВКА НА ОПЛАТУ!\n\n"
-                         f"👤 Пользователь: {user_id}\n"
-                         f"📅 Тариф: Год (1990 руб.)\n"
-                         f"Статус: Ожидает подтверждения\n\n"
-                         f"👆 Нажмите кнопку ниже для подтверждения",
-                    reply_markup=get_admin_keyboard(user_id)
-                )
-        else:
-            await update.message.reply_text("⚠️ Вы ещё не выбрали тариф. Нажмите «Создать сказку», чтобы увидеть тарифы.", reply_markup=get_main_keyboard())
-    return -1
+
 # ======== ДИАЛОГ ========
 NAME, TOPIC, MORAL, LANGUAGE, TRAIT, VOICE = range(6)
 
