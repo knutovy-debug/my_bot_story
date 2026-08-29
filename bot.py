@@ -19,7 +19,7 @@ OPENAI_API_KEY = "sk-5172653204024fcaa7e26de04f04ec47"
 # ======== ОПЛАТА И РЕКВИЗИТЫ ========
 CARD_NUMBER = "2202208186522703"
 DONATE_LINK = "2202208186522703"
-ADMIN_ID = "1177629279"
+ADMIN_ID = "8434163956"
 
 # ======== ИНИЦИАЛИЗАЦИЯ DEEPSEEK ========
 client = OpenAI(
@@ -341,8 +341,8 @@ async def random_story(update, context):
         response = client.chat.completions.create(
             model="deepseek-chat",
             messages=[{"role": "user", "content": prompt}],
-            max_tokens=800,
-            temperature=0.7
+            max_tokens=1200,
+            temperature=0.6
         )
         story_text = response.choices[0].message.content.strip()
         story_text = re.sub(r'\*\*', '', story_text)
