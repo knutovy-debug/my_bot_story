@@ -142,13 +142,6 @@ def get_topic_keyboard():
         ["🌊 Подводный мир"],
     ], one_time_keyboard=True, resize_keyboard=True)
 
-def get_length_keyboard():
-    return ReplyKeyboardMarkup([
-        ["📖 Короткая (5-7 минут)"],
-        ["📖📖 Средняя (8-12 минут)"],
-        ["📖📖📖 Длинная (15 минут+)"],
-    ], one_time_keyboard=True, resize_keyboard=True)
-
 def get_moral_keyboard():
     return ReplyKeyboardMarkup([
         ["💛 Дружба"],
@@ -291,7 +284,7 @@ async def handle_buttons(update, context):
         await update.message.reply_text("Напиши /start.", reply_markup=get_main_keyboard())
 
 # ======== ДИАЛОГ ========
-NAME, TOPIC, LENGTH, MORAL, LANGUAGE, TRAIT, VOICE = range(7)
+NAME, TOPIC, MORAL, LANGUAGE, TRAIT, VOICE = range(6)
 
 async def story_start(update, context):
     user_id = update.effective_user.id
@@ -336,19 +329,17 @@ async def random_story(update, context):
     context.user_data['conversation'] = True
     name = random.choice(["Аня", "Максим", "Соня", "Тимур"])
     topic = random.choice(["Космос", "Динозавры", "Принцессы", "Пираты", "Феи", "Лесные зверята", "Новый год", "Рыцари", "Подводный мир"])
-    length = random.choice(["короткая", "средняя", "длинная"])
     moral = random.choice(["дружба", "смелость", "доброта", "честность", "семья", "любознательность", "терпение"])
     language = "ru"
     trait = random.choice(CHARACTER_TRAITS)
     voice = random.choice(["ru-RU-DmitryNeural", "ru-RU-SvetlanaNeural"])
     context.user_data['name'] = name
     context.user_data['topic'] = topic
-    context.user_data['length'] = length
     context.user_data['moral'] = moral
     context.user_data['language'] = language
     context.user_data['trait'] = trait
     context.user_data['voice'] = voice
-    prompt = f"Напиши {length} сказку для ребёнка 5-7 лет. Герой – {name}, {trait}. Тема: {topic}. Мораль: {moral}. Напиши текст БЕЗ использования звёздочек, решёток и каких-либо символов форматирования. Просто чистый текст. Обязательно закончи сказку красивым финалом!"
+    prompt = f"Напиши сказку для ребёнка 5-7 лет. Герой – {name}, {trait}. Тема: {topic}. Мораль: {moral}. Напиши текст БЕЗ использования звёздочек, решёток и каких-либо символов форматирования. Просто чистый текст. Обязательно закончи сказку красивым финалом!"
     await update.message.reply_text("⏳ Генерирую сказку...")
     try:
         response = client.chat.completions.create(
@@ -371,7 +362,7 @@ async def random_story(update, context):
     audio_bytes = await edge_tts_speak(story_text, voice=voice)
     if audio_bytes:
         await update.message.reply_audio(audio_bytes, caption="✅ Готово!")
-        save_story(update.effective_user.id, name, topic, length, moral, language, trait, "Волшебник", story_text)
+        save_story(update.effective_user.id, name, topic, "короткая", moral, language, trait, "Волшебник", story_text)
         increment_daily_count(update.effective_user.id)
     else:
         await update.message.reply_text("❌ Ошибка озвучки.")
@@ -388,13 +379,6 @@ async def story_topic(update, context):
     chosen = update.message.text
     topic = chosen.replace("🚀 ", "").replace("🦕 ", "").replace("👸 ", "").replace("🏴‍☠️ ", "").replace("🧚 ", "").replace("🐾 ", "").replace("🎄 ", "").replace("🏰 ", "").replace("🌊 ", "")
     context.user_data['topic'] = topic
-    await update.message.reply_text("📏 Выбери длину сказки:", reply_markup=get_length_keyboard())
-    return LENGTH
-
-async def story_length(update, context):
-    chosen = update.message.text
-    length = chosen.replace("📖📖📖 ", "").replace("📖📖 ", "").replace("📖 ", "")
-    context.user_data['length'] = length
     await update.message.reply_text("💡 Выбери мораль сказки:", reply_markup=get_moral_keyboard())
     return MORAL
 
@@ -455,11 +439,10 @@ async def story_voice(update, context):
     context.user_data['voice'] = voice_name
     name = context.user_data['name']
     topic = context.user_data['topic']
-    length = context.user_data['length']
     moral = context.user_data['moral']
     language = context.user_data['language']
     trait = context.user_data['trait']
-    prompt = f"Напиши {length} сказку для ребёнка 5-7 лет. Герой – {name}, {trait}. Тема: {topic}. Мораль: {moral}. Напиши текст БЕЗ использования звёздочек, решёток и каких-либо символов форматирования. Просто чистый текст. Обязательно закончи сказку красивым финалом!"
+    prompt = f"Напиши сказку для ребёнка 5-7 лет. Герой – {name}, {trait}. Тема: {topic}. Мораль: {moral}. Напиши текст БЕЗ использования звёздочек, решёток и каких-либо символов форматирования. Просто чистый текст. Обязательно закончи сказку красивым финалом!"
     await update.message.reply_text("⏳ Генерирую сказку...")
     try:
         response = client.chat.completions.create(
@@ -482,7 +465,7 @@ async def story_voice(update, context):
     audio_bytes = await edge_tts_speak(story_text, voice=voice_name)
     if audio_bytes:
         await update.message.reply_audio(audio_bytes, caption="✅ Готово!")
-        save_story(update.effective_user.id, name, topic, length, moral, language, trait, "Волшебник", story_text)
+        save_story(update.effective_user.id, name, topic, "короткая", moral, language, trait, "Волшебник", story_text)
         increment_daily_count(update.effective_user.id)
     else:
         await update.message.reply_text("❌ Ошибка озвучки.")
@@ -534,7 +517,6 @@ conv = ConversationHandler(
     states={
         NAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, story_name)],
         TOPIC: [MessageHandler(filters.TEXT & ~filters.COMMAND, story_topic)],
-        LENGTH: [MessageHandler(filters.TEXT & ~filters.COMMAND, story_length)],
         MORAL: [MessageHandler(filters.TEXT & ~filters.COMMAND, story_moral)],
         LANGUAGE: [MessageHandler(filters.TEXT & ~filters.COMMAND, story_language)],
         TRAIT: [MessageHandler(filters.TEXT & ~filters.COMMAND, story_trait)],
