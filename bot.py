@@ -278,8 +278,6 @@ async def handle_buttons(update, context):
         await help_command(update, context)
     else:
         await update.message.reply_text("Напиши /start.", reply_markup=get_main_keyboard())
-    elif text == "📢 Наш канал":
-        await open_channel(update, context)
 # ======== ДИАЛОГ ========
 NAME, TOPIC, MORAL, LANGUAGE, TRAIT, VOICE = range(6)
 
