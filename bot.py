@@ -275,6 +275,9 @@ async def handle_buttons(update, context):
         await donate(update, context)
     elif text == "❓ Помощь":
         await help_command(update, context)
+    # ВАЖНО: Если текст "Оплатил" - отправляем его в обработчик оплаты
+    elif "оплатил" in text.lower():
+        await payment_message_handler(update, context)
     else:
         await update.message.reply_text("Напиши /start.", reply_markup=get_main_keyboard())
 
@@ -496,8 +499,7 @@ conv = ConversationHandler(
 )
 app.add_handler(conv)
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_buttons))
-app.add_handler(CallbackQueryHandler(payment_handler))
-app.add_handler(CallbackQueryHandler(confirm_handler))
-
+app.add_handler(MessageHandler(filters.Regex("оплатил") & ~filters.COMMAND, payment_message_handler))
+app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_buttons))
 # ======== ГОТОВО! ========
 app.run_polling(allowed_updates=Update.ALL_TYPES)
