@@ -21,6 +21,7 @@ CARD_NUMBER = "2202208186522703"
 DONATE_LINK = "2202208186522703"
 MONTHLY_PRICE = "299 рублей"
 YEARLY_PRICE = "1990 рублей"
+ADMIN_ID = "1177629279"  # <--- ВСТАВЬ СВОЙ ID СЮДА (узнаёшь у @userinfobot)
 
 # ======== ИНИЦИАЛИЗАЦИЯ DEEPSEEK ========
 client = OpenAI(
@@ -33,12 +34,12 @@ DB_FILE = "stories.json"
 
 def load_db():
     if not os.path.exists(DB_FILE):
-        return {"stories": [], "premium_users": {}, "user_stats": {}, "pending_payments": {}}
+        return {"stories": [], "premium_users": {}, "user_stats": {}, "pending_payments": {}, "payment_requests": {}}
     try:
         with open(DB_FILE, "r", encoding="utf-8") as f:
             return json.load(f)
     except:
-        return {"stories": [], "premium_users": {}, "user_stats": {}, "pending_payments": {}}
+        return {"stories": [], "premium_users": {}, "user_stats": {}, "pending_payments": {}, "payment_requests": {}}
 
 def save_db(db):
     with open(DB_FILE, "w", encoding="utf-8") as f:
@@ -197,7 +198,7 @@ async def my_stories(update, context):
         keyboard = [[InlineKeyboardButton("🗑️ Удалить", callback_data=f"delete_{story['id']}")]]
         await update.message.reply_text(f"📖 {story['name']} – {story['topic']}", reply_markup=InlineKeyboardMarkup(keyboard))
 
-# ======== ОБРАБОТКА ОПЛАТЫ ========
+# ======== ОБРАБОТКА ОПЛАТЫ (Ожидание подтверждения) ========
 async def handle_payment_message(update, context):
     user_id = update.effective_user.id
     if "оплатил" in update.message.text.lower():
@@ -205,17 +206,46 @@ async def handle_payment_message(update, context):
         if str(user_id) in db["pending_payments"]:
             plan = db["pending_payments"][str(user_id)]
             if plan == "month":
-                activate_subscription(user_id, 30)
-                await update.message.reply_text("✅ Спасибо за оплату! Подписка на 1 месяц активирована!", reply_markup=get_main_keyboard())
+                db["payment_requests"][str(user_id)] = {"plan": "month", "status": "pending"}
+                save_db(db)
+                await update.message.reply_text("📩 Заявка отправлена! Ожидайте подтверждения оплаты от администратора.", reply_markup=get_main_keyboard())
             elif plan == "year":
-                activate_subscription(user_id, 365)
-                await update.message.reply_text("✅ Спасибо за оплату! Подписка на 1 год активирована!", reply_markup=get_main_keyboard())
-            del db["pending_payments"][str(user_id)]
-            save_db(db)
+                db["payment_requests"][str(user_id)] = {"plan": "year", "status": "pending"}
+                save_db(db)
+                await update.message.reply_text("📩 Заявка отправлена! Ожидайте подтверждения оплаты от администратора.", reply_markup=get_main_keyboard())
         else:
-            await update.message.reply_text("✅ Спасибо за оплату! Подписка активирована!", reply_markup=get_main_keyboard())
+            await update.message.reply_text("⚠️ Вы ещё не выбрали тариф. Нажмите «Создать сказку», чтобы увидеть тарифы.", reply_markup=get_main_keyboard())
     return -1
 
+# ======== КОМАНДА ПОДТВЕРЖДЕНИЯ ОПЛАТЫ (ТОЛЬКО ДЛЯ ТЕБЯ) ========
+async def confirm_payment(update, context):
+    user_id = update.effective_user.id
+    if str(user_id) != ADMIN_ID:
+        await update.message.reply_text("⛔ Только для администратора.")
+        return
+
+    if not context.args:
+        await update.message.reply_text("⚠️ Использование: /confirm 123456789")
+        return
+
+    target_user_id = str(context.args[0])
+    db = load_db()
+
+    if target_user_id in db["payment_requests"]:
+        plan = db["payment_requests"][target_user_id]["plan"]
+        if plan == "month":
+            activate_subscription(int(target_user_id), 30)
+            await update.message.reply_text(f"✅ Подписка на 1 месяц активирована для пользователя {target_user_id}!")
+        elif plan == "year":
+            activate_subscription(int(target_user_id), 365)
+            await update.message.reply_text(f"✅ Подписка на 1 год активирована для пользователя {target_user_id}!")
+        del db["payment_requests"][target_user_id]
+        del db["pending_payments"][target_user_id]
+        save_db(db)
+    else:
+        await update.message.reply_text("⚠️ Заявка от этого пользователя не найдена.")
+
+# ======== ОБРАБОТЧИК КНОПОК ========
 async def handle_buttons(update, context):
     text = update.message.text
     if text == "📖 Создать сказку":
@@ -467,6 +497,7 @@ app.add_handler(CommandHandler("start", start))
 app.add_handler(CommandHandler("help", help_command))
 app.add_handler(CommandHandler("donate", donate))
 app.add_handler(CommandHandler("my_stories", my_stories))
+app.add_handler(CommandHandler("confirm", confirm_payment))
 app.add_handler(MessageHandler(filters.Regex("оплатил") & ~filters.COMMAND, handle_payment_message))
 
 conv = ConversationHandler(
