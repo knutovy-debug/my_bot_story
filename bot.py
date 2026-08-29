@@ -9,13 +9,13 @@ import openai
 import edge_tts
 
 # ===== ТОКЕНЫ (ПРОВЕРЬ ЭТИ СТРОКИ) =====
-TELEGRAM_BOT_TOKEN = "8434163956:AAFsId_CNRX2rkCBH4_gsIrWxa99k1ohUsA"
+TELEGRAM_BOT_TOKEN = "8434163956:AAH5VtExrPK0mnZrz4Bgckp7xjmJbEtFRc"
 OPENAI_API_KEY = "sk-5172653204024fcaa7e26de04f04ec47"
-ADMIN_ID = "8796483021"
+ADMIN_ID = "8434163956"
 
 openai.api_key = OPENAI_API_KEY
 
-PAYMENT_LINK = "https://www.tinkoff.ru/..."
+PAYMENT_LINK = "2202208186522703"
 
 VOICES = {
     "Женский (Светлана)": "ru-RU-SvetlanaNeural",
