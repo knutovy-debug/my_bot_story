@@ -21,7 +21,7 @@ CARD_NUMBER = "2202208186522703"
 DONATE_LINK = "2202208186522703"
 MONTHLY_PRICE = "299 рублей"
 YEARLY_PRICE = "1990 рублей"
-ADMIN_ID = "1177629279"  # <--- ВСТАВЬ СВОЙ ID СЮДА
+ADMIN_ID = "8434163956"  # <--- ВСТАВЬ СВОЙ ID СЮДА
 
 # ======== ИНИЦИАЛИЗАЦИЯ DEEPSEEK ========
 client = OpenAI(
