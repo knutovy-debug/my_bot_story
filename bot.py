@@ -21,8 +21,9 @@ CARD_NUMBER = "2202208186522703"
 DONATE_LINK = "2202208186522703"
 MONTHLY_PRICE = "299 рублей"
 YEARLY_PRICE = "1990 рублей"
-# Твой личный ID (от @userinfobot)
-ADMIN_ID = "8434163956"
+
+# Твой личный Telegram ID
+ADMIN_ID = "1177629279"
 
 # ======== ИНИЦИАЛИЗАЦИЯ DEEPSEEK ========
 client = OpenAI(
