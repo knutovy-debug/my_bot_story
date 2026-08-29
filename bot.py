@@ -212,10 +212,26 @@ async def handle_payment_message(update, context):
                 db["payment_requests"][str(user_id)] = {"plan": "month", "status": "pending"}
                 save_db(db)
                 await update.message.reply_text("📩 Заявка отправлена! Ожидайте подтверждения оплаты от администратора.", reply_markup=get_main_keyboard())
+                # ОПОВЕЩЕНИЕ ДЛЯ ТЕБЯ (АДМИНА)
+                await context.bot.send_message(
+                    chat_id=ADMIN_ID,
+                    text=f"💳 НОВАЯ ЗАЯВКА НА ОПЛАТУ!\n\n"
+                         f"👤 Пользователь: {user_id}\n"
+                         f"📅 Тариф: Месяц (299 руб.)\n"
+                         f"Статус: Ожидает подтверждения"
+                )
             elif plan == "year":
                 db["payment_requests"][str(user_id)] = {"plan": "year", "status": "pending"}
                 save_db(db)
                 await update.message.reply_text("📩 Заявка отправлена! Ожидайте подтверждения оплаты от администратора.", reply_markup=get_main_keyboard())
+                # ОПОВЕЩЕНИЕ ДЛЯ ТЕБЯ (АДМИНА)
+                await context.bot.send_message(
+                    chat_id=ADMIN_ID,
+                    text=f"💳 НОВАЯ ЗАЯВКА НА ОПЛАТУ!\n\n"
+                         f"👤 Пользователь: {user_id}\n"
+                         f"📅 Тариф: Год (1990 руб.)\n"
+                         f"Статус: Ожидает подтверждения"
+                )
         else:
             await update.message.reply_text("⚠️ Вы ещё не выбрали тариф. Нажмите «Создать сказку», чтобы увидеть тарифы.", reply_markup=get_main_keyboard())
     return -1
