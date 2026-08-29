@@ -4,7 +4,7 @@ import re
 import asyncio
 import requests
 import random
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 
 from openai import OpenAI
 import edge_tts
@@ -15,9 +15,12 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters, C
 # ======== ТОКЕНЫ ========
 TELEGRAM_BOT_TOKEN = "8434163956:AAFsId_CNRX2rkCBH4_gsIrWxa99k1ohUsA"
 OPENAI_API_KEY = "sk-5172653204024fcaa7e26de04f04ec47"
+
+# ======== ОПЛАТА И РЕКВИЗИТЫ ========
 CARD_NUMBER = "2202208186522703"
 DONATE_LINK = "2202208186522703"
-PRICE = "199 рублей"  # ← ЦЕНА ПОДПИСКИ
+MONTHLY_PRICE = "299 рублей"
+YEARLY_PRICE = "1990 рублей"
 
 # ======== ИНИЦИАЛИЗАЦИЯ DEEPSEEK ========
 client = OpenAI(
@@ -30,12 +33,12 @@ DB_FILE = "stories.json"
 
 def load_db():
     if not os.path.exists(DB_FILE):
-        return {"stories": [], "premium_users": [], "user_stats": {}, "referrals": {}}
+        return {"stories": [], "premium_users": {}, "user_stats": {}, "pending_payments": {}}
     try:
         with open(DB_FILE, "r", encoding="utf-8") as f:
             return json.load(f)
     except:
-        return {"stories": [], "premium_users": [], "user_stats": {}, "referrals": {}}
+        return {"stories": [], "premium_users": {}, "user_stats": {}, "pending_payments": {}}
 
 def save_db(db):
     with open(DB_FILE, "w", encoding="utf-8") as f:
@@ -70,7 +73,10 @@ def delete_story(story_id, user_id):
 # ======== ФУНКЦИИ ПОДПИСКИ ========
 def is_premium(user_id):
     db = load_db()
-    return str(user_id) in db["premium_users"]
+    if str(user_id) not in db["premium_users"]:
+        return False
+    expiration = db["premium_users"][str(user_id)]["expiration"]
+    return datetime.now() < datetime.fromisoformat(expiration)
 
 def get_user_story_count(user_id):
     db = load_db()
@@ -84,19 +90,12 @@ def can_create_story(user_id):
     if is_premium(user_id):
         return True
     return get_user_story_count(user_id) < 3
-def increment_daily_count(user_id):
+
+def activate_subscription(user_id, days):
     db = load_db()
-    if str(user_id) not in db["user_stats"]:
-        db["user_stats"][str(user_id)] = {"daily_count": 0, "last_reset": date.today().isoformat()}
-    db["user_stats"][str(user_id)]["daily_count"] += 1
+    expiration = datetime.now() + timedelta(days=days)
+    db["premium_users"][str(user_id)] = {"expiration": expiration.isoformat()}
     save_db(db)
-def get_user_story_count(user_id):
-    db = load_db()
-    count = 0
-    for s in db["stories"]:
-        if s["user_id"] == user_id:
-            count += 1
-    return count
 
 # ======== КЛАВИАТУРА ========
 def get_main_keyboard():
@@ -108,6 +107,13 @@ def get_main_keyboard():
         [KeyboardButton("❓ Помощь")],
     ]
     return ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+
+def get_payment_keyboard():
+    keyboard = [
+        [InlineKeyboardButton("💳 Оплатить месяц (299 руб.)", callback_data="pay_month")],
+        [InlineKeyboardButton("💳 Оплатить год (1990 руб.)", callback_data="pay_year")],
+    ]
+    return InlineKeyboardMarkup(keyboard)
 
 def get_topic_keyboard():
     return ReplyKeyboardMarkup([
@@ -176,7 +182,11 @@ async def start(update, context):
 async def help_command(update, context):
     await update.message.reply_text("Нажми /start и выбери «Создать сказку».", reply_markup=get_main_keyboard())
 async def donate(update, context):
-    await update.message.reply_text(f"❤️ Спасибо! Карта: {CARD_NUMBER}\nСсылка: {DONATE_LINK}", parse_mode="Markdown", reply_markup=get_main_keyboard())
+    await update.message.reply_text(
+        f"❤️ Спасибо! Карта: {CARD_NUMBER}\nСсылка: {DONATE_LINK}",
+        parse_mode="Markdown",
+        reply_markup=get_main_keyboard()
+    )
 async def my_stories(update, context):
     user_id = update.effective_user.id
     stories = get_user_stories(user_id)
@@ -192,14 +202,20 @@ async def handle_payment_message(update, context):
     user_id = update.effective_user.id
     if "оплатил" in update.message.text.lower():
         db = load_db()
-        if str(user_id) not in db["premium_users"]:
-            db["premium_users"].append(str(user_id))
+        if str(user_id) in db["pending_payments"]:
+            plan = db["pending_payments"][str(user_id)]
+            if plan == "month":
+                activate_subscription(user_id, 30)
+                await update.message.reply_text("✅ Спасибо за оплату! Подписка на 1 месяц активирована!", reply_markup=get_main_keyboard())
+            elif plan == "year":
+                activate_subscription(user_id, 365)
+                await update.message.reply_text("✅ Спасибо за оплату! Подписка на 1 год активирована!", reply_markup=get_main_keyboard())
+            del db["pending_payments"][str(user_id)]
             save_db(db)
-            await update.message.reply_text("✅ Спасибо за оплату! Теперь у тебя есть безлимит на 7 дней!", reply_markup=get_main_keyboard())
         else:
-            await update.message.reply_text("✅ У тебя уже есть безлимит!", reply_markup=get_main_keyboard())
+            await update.message.reply_text("✅ Спасибо за оплату! Подписка активирована!", reply_markup=get_main_keyboard())
+    return -1
 
-# ======== ОБРАБОТЧИК КНОПОК ========
 async def handle_buttons(update, context):
     text = update.message.text
     if text == "📖 Создать сказку":
@@ -221,14 +237,19 @@ NAME, TOPIC, LENGTH, MORAL, LANGUAGE, TRAIT, VOICE = range(7)
 async def story_start(update, context):
     user_id = update.effective_user.id
     if not can_create_story(user_id):
+        db = load_db()
+        if str(user_id) not in db["pending_payments"]:
+            db["pending_payments"][str(user_id)] = None
+            save_db(db)
         await update.message.reply_text(
             f"⚠️ Вы использовали все 3 бесплатные сказки.\n\n"
             f"💳 Чтобы продолжить, оплатите подписку:\n"
-            f"Цена: {PRICE}\n"
+            f"Цена: {MONTHLY_PRICE} / месяц\n"
+            f"Цена: {YEARLY_PRICE} / год\n"
             f"Карта: `{CARD_NUMBER}`\n\n"
-            f"После оплаты напишите «Оплатил»!",
+            f"Выберите тариф ниже и напишите «Оплатил»!",
             parse_mode="Markdown",
-            reply_markup=get_main_keyboard()
+            reply_markup=get_payment_keyboard()
         )
         return -1
     context.user_data['conversation'] = True
@@ -238,14 +259,19 @@ async def story_start(update, context):
 async def random_story(update, context):
     user_id = update.effective_user.id
     if not can_create_story(user_id):
+        db = load_db()
+        if str(user_id) not in db["pending_payments"]:
+            db["pending_payments"][str(user_id)] = None
+            save_db(db)
         await update.message.reply_text(
             f"⚠️ Вы использовали все 3 бесплатные сказки.\n\n"
             f"💳 Чтобы продолжить, оплатите подписку:\n"
-            f"Цена: {PRICE}\n"
+            f"Цена: {MONTHLY_PRICE} / месяц\n"
+            f"Цена: {YEARLY_PRICE} / год\n"
             f"Карта: `{CARD_NUMBER}`\n\n"
-            f"После оплаты напишите «Оплатил»!",
+            f"Выберите тариф ниже и напишите «Оплатил»!",
             parse_mode="Markdown",
-            reply_markup=get_main_keyboard()
+            reply_markup=get_payment_keyboard()
         )
         return -1
     context.user_data['conversation'] = True
@@ -423,6 +449,16 @@ async def handle_inline(update, context):
         story_id = int(data.split("_")[1])
         delete_story(story_id, update.effective_user.id)
         await query.message.reply_text("🗑️ Сказка удалена.")
+    elif data == "pay_month":
+        db = load_db()
+        db["pending_payments"][str(update.effective_user.id)] = "month"
+        save_db(db)
+        await query.message.reply_text("💳 Вы выбрали подписку на 1 месяц (299 руб.)\n\nПожалуйста, переведите 299 рублей на карту:\n`2202208186522703`\n\nПосле оплаты напишите «Оплатил»!", parse_mode="Markdown", reply_markup=get_main_keyboard())
+    elif data == "pay_year":
+        db = load_db()
+        db["pending_payments"][str(update.effective_user.id)] = "year"
+        save_db(db)
+        await query.message.reply_text("💳 Вы выбрали подписку на 1 год (1990 руб.)\n\nПожалуйста, переведите 1990 рублей на карту:\n`2202208186522703`\n\nПосле оплаты напишите «Оплатил»!", parse_mode="Markdown", reply_markup=get_main_keyboard())
 
 # ======== ИНИЦИАЛИЗАЦИЯ БОТА ========
 app = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
