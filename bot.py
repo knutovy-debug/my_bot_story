@@ -40,7 +40,7 @@ def save_db(db):
     with open(DB_FILE, "w", encoding="utf-8") as f:
         json.dump(db, f, ensure_ascii=False, indent=4)
 
-def save_story(user_id, name, topic, length, moral, language, trait, appearance, story_text, audio_data=None):
+def save_story(user_id, name, topic, length, moral, language, trait, appearance, story_text):
     db = load_db()
     db["stories"].append({
         "id": len(db["stories"]) + 1,
@@ -56,6 +56,7 @@ def save_story(user_id, name, topic, length, moral, language, trait, appearance,
         "created_at": datetime.now().isoformat()
     })
     save_db(db)
+
 def get_user_stories(user_id):
     db = load_db()
     return [s for s in db["stories"] if s["user_id"] == user_id][::-1]
@@ -281,17 +282,10 @@ async def random_story(update, context):
     audio_bytes = await edge_tts_speak(story_text, voice=voice)
     if audio_bytes:
         await update.message.reply_audio(audio_bytes, caption="✅ Готово!")
-        save_story(update.effective_user.id, name, topic, length, moral, language, trait, "Волшебник", story_text, audio_data=audio_bytes)
+        save_story(update.effective_user.id, name, topic, length, moral, language, trait, "Волшебник", story_text)
         increment_daily_count(update.effective_user.id)
     else:
         await update.message.reply_text("❌ Ошибка озвучки.")
-    await update.message.reply_text("🎨 Генерирую картинку...")
-    image_prompt = f"{name} as a {trait} in a {topic} fairy tale"
-    image_bytes = await generate_image(image_prompt)
-    if image_bytes:
-        await update.message.reply_photo(image_bytes, caption="🖼️ Иллюстрация")
-    else:
-        await update.message.reply_text("❌ Не удалось сгенерировать картинку.")
     await update.message.reply_text("Что хочешь сделать дальше?", reply_markup=get_main_keyboard())
     context.user_data['conversation'] = False
     return -1
@@ -399,17 +393,10 @@ async def story_voice(update, context):
     audio_bytes = await edge_tts_speak(story_text, voice=voice_name)
     if audio_bytes:
         await update.message.reply_audio(audio_bytes, caption="✅ Готово!")
-        save_story(update.effective_user.id, name, topic, length, moral, language, trait, "Волшебник", story_text, audio_data=audio_bytes)
+        save_story(update.effective_user.id, name, topic, length, moral, language, trait, "Волшебник", story_text)
         increment_daily_count(update.effective_user.id)
     else:
         await update.message.reply_text("❌ Ошибка озвучки.")
-    await update.message.reply_text("🎨 Генерирую картинку...")
-    image_prompt = f"{name} as a {trait} in a {topic} fairy tale"
-    image_bytes = await generate_image(image_prompt)
-    if image_bytes:
-        await update.message.reply_photo(image_bytes, caption="🖼️ Иллюстрация")
-    else:
-        await update.message.reply_text("❌ Не удалось сгенерировать картинку.")
     await update.message.reply_text("Что хочешь сделать дальше?", reply_markup=get_main_keyboard())
     context.user_data['conversation'] = False
     return -1
