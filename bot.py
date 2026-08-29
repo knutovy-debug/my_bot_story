@@ -8,16 +8,15 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters, C
 import openai
 import edge_tts
 
-# ===== ТОКЕНЫ =====
-TELEGRAM_BOT_TOKEN = "8434163956:AAH5VtExrPK0mnZrz4Bgckp7xjmJbEtFRc"
+# ===== ТОКЕНЫ (ПРОВЕРЬ ЭТИ СТРОКИ) =====
+TELEGRAM_BOT_TOKEN = "8434163956:AAFsId_CNRX2rkCBH4_gsIrWxa99k1ohUsA"
 OPENAI_API_KEY = "sk-5172653204024fcaa7e26de04f04ec47"
-ADMIN_ID = "8674877633"  # ТВОЙ TELEGRAM ID
+ADMIN_ID = "8674877633"
 
 openai.api_key = OPENAI_API_KEY
 
-PAYMENT_LINK = "https://www.tinkoff.ru/..."  # ССЫЛКА НА ОПЛАТУ
+PAYMENT_LINK = "https://www.tinkoff.ru/..."
 
-# ===== ГОЛОСА, ЯЗЫКИ =====
 VOICES = {
     "Женский (Светлана)": "ru-RU-SvetlanaNeural",
     "Мужской (Дмитрий)": "ru-RU-DmitryNeural",
@@ -26,8 +25,6 @@ VOICES = {
 LANGUAGES = {
     "🇷🇺 Русский": "ru",
     "🇬🇧 Английский": "en",
-    "🇺🇦 Українська": "uk",
-    "🇪🇸 Испанский": "es",
 }
 
 CHARACTER_TRAITS = ["Смелый", "Добрый", "Любопытный", "Весёлый", "Умный"]
@@ -162,22 +159,10 @@ async def start(update, context):
     await update.message.reply_text("✨ Привет! Я бот для аудиосказок с картинками!", reply_markup=get_main_keyboard())
 
 async def help_command(update, context):
-    await update.message.reply_text(
-        "📖 Создать сказку\n"
-        "📚 Мои сказки\n"
-        "💳 Оплатить доступ – снять лимит 3 сказки/день\n"
-        "❤️ Поддержать автора – реквизиты\n"
-        "❓ Помощь",
-        reply_markup=get_main_keyboard()
-    )
+    await update.message.reply_text("📖 Создать сказку\n📚 Мои сказки\n💳 Оплатить доступ – снять лимит 3 сказки/день\n❤️ Поддержать автора\n❓ Помощь", reply_markup=get_main_keyboard())
 
 async def donate(update, context):
-    await update.message.reply_text(
-        f"❤️ Спасибо за поддержку!\n\n"
-        f"💳 Карта: 1234 5678 9012 3456\n"
-        f"🔗 {PAYMENT_LINK}",
-        reply_markup=get_main_keyboard()
-    )
+    await update.message.reply_text(f"❤️ Спасибо за поддержку!\n\n💳 Карта: 1234 5678 9012 3456\n🔗 {PAYMENT_LINK}", reply_markup=get_main_keyboard())
 
 async def payment(update, context):
     user_id = update.effective_user.id
@@ -205,10 +190,7 @@ async def my_stories(update, context):
         return
     for story in stories[:5]:
         keyboard = [[InlineKeyboardButton("🗑️ Удалить", callback_data=f"delete_{story[0]}")]]
-        await update.message.reply_text(
-            f"📖 {story[1]} – {story[2]} ({story[3][:10]})",
-            reply_markup=InlineKeyboardMarkup(keyboard)
-        )
+        await update.message.reply_text(f"📖 {story[1]} – {story[2]} ({story[3][:10]})", reply_markup=InlineKeyboardMarkup(keyboard))
     if len(stories) > 5:
         await update.message.reply_text("Показаны последние 5 сказок.")
 
@@ -228,17 +210,13 @@ async def handle_buttons(update, context):
     else:
         await update.message.reply_text("Используйте кнопки.", reply_markup=get_main_keyboard())
 
-# ===== ДИАЛОГ (упрощённый) =====
+# ===== ДИАЛОГ =====
 NAME, TOPIC, LENGTH, MORAL, LANGUAGE, TRAIT, APPEARANCE, VOICE = range(8)
 
 async def story_start(update, context):
     user_id = update.effective_user.id
     if not can_create_story(user_id):
-        await update.message.reply_text(
-            f"⚠️ Лимит 3 сказки/день исчерпан.\n\n"
-            f"💳 Нажмите «Оплатить доступ» для снятия лимита.",
-            reply_markup=get_main_keyboard()
-        )
+        await update.message.reply_text(f"⚠️ Лимит 3 сказки/день исчерпан.\n\n💳 Нажмите «Оплатить доступ» для снятия лимита.", reply_markup=get_main_keyboard())
         return -1
     context.user_data['conversation'] = True
     await update.message.reply_text("📖 Напиши имя ребёнка:")
@@ -318,8 +296,6 @@ async def story_voice(update, context):
     prompt = {
         'ru': f"Напиши {length} сказку для ребёнка 5-7 лет на русском. Герой – {name}, {trait}, {appearance}. Тема: {topic}. Мораль: {moral}.",
         'en': f"Write a {length} fairy tale for a 5-7 year old in English. Hero – {name}, {trait}, {appearance}. Theme: {topic}. Moral: {moral}.",
-        'uk': f"Напиши {length} казку для дитини 5-7 років українською. Герой – {name}, {trait}, {appearance}. Тема: {topic}. Мораль: {moral}.",
-        'es': f"Escribe un cuento {length} para niños de 5-7 años en español. Héroe – {name}, {trait}, {appearance}. Tema: {topic}. Moral: {moral}.",
     }.get(language, "ru")
 
     await update.message.reply_text("⏳ Генерирую сказку...")
@@ -372,7 +348,7 @@ async def cancel(update, context):
     await update.message.reply_text("Отменено.", reply_markup=get_main_keyboard())
     return -1
 
-# ===== ОБРАБОТЧИК ИНЛАЙН-КНОПОК (ГЛАВНЫЙ) =====
+# ===== ОБРАБОТЧИК ИНЛАЙН-КНОПОК (С УВЕДОМЛЕНИЕМ АДМИНУ) =====
 async def handle_inline(update, context):
     query = update.callback_query
     await query.answer()
@@ -396,26 +372,19 @@ async def handle_inline(update, context):
             [InlineKeyboardButton("✅ Подтвердить", callback_data=f"confirm_{user_id}")],
             [InlineKeyboardButton("❌ Отклонить", callback_data=f"reject_{user_id}")],
         ]
-        # Отправляем уведомление ТЕБЕ (администратору)
         await context.bot.send_message(
             chat_id=ADMIN_ID,
-            text=f"💳 Пользователь @{update.effective_user.username} (ID: {user_id}) оплатил доступ.\nПодтвердить?",
+            text=f"💳 Пользователь @{update.effective_user.username} (ID: {user_id}) оплатил доступ. Подтвердить?",
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
-        await query.message.reply_text(
-            "✅ Запрос отправлен администратору. Ожидайте подтверждения.",
-            reply_markup=get_main_keyboard()
-        )
+        await query.message.reply_text("✅ Запрос отправлен администратору. Ожидайте подтверждения.", reply_markup=get_main_keyboard())
 
     elif data.startswith("confirm_"):
         user_id = int(data.split("_")[1])
         set_premium(user_id, 1)
         await query.message.reply_text(f"✅ Доступ подтверждён для пользователя {user_id}!")
         try:
-            await context.bot.send_message(
-                user_id,
-                "🎉 Ваш безлимитный доступ активирован! Создавайте сколько угодно сказок."
-            )
+            await context.bot.send_message(user_id, "🎉 Ваш безлимитный доступ активирован!")
         except:
             pass
 
@@ -423,10 +392,7 @@ async def handle_inline(update, context):
         user_id = int(data.split("_")[1])
         await query.message.reply_text(f"❌ Доступ отклонён для пользователя {user_id}.")
         try:
-            await context.bot.send_message(
-                user_id,
-                "❌ Ваш запрос на оплату отклонён. Свяжитесь с поддержкой."
-            )
+            await context.bot.send_message(user_id, "❌ Ваш запрос отклонён.")
         except:
             pass
 
@@ -438,10 +404,7 @@ def main():
     app = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
 
     conv = ConversationHandler(
-        entry_points=[
-            CommandHandler("story", story_start),
-            MessageHandler(filters.Regex("📖 Создать сказку"), story_start),
-        ],
+        entry_points=[CommandHandler("story", story_start), MessageHandler(filters.Regex("📖 Создать сказку"), story_start)],
         states={
             NAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, story_name)],
             TOPIC: [MessageHandler(filters.TEXT & ~filters.COMMAND, story_topic)],
@@ -462,7 +425,7 @@ def main():
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_buttons))
     app.add_handler(CallbackQueryHandler(handle_inline))
 
-    print("🤖 Бот запущен с оплатой и подтверждением...")
+    print("🤖 Бот запущен...")
     app.run_polling()
 
 if __name__ == "__main__":
