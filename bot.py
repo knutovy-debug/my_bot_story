@@ -499,7 +499,6 @@ conv = ConversationHandler(
 )
 app.add_handler(conv)
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_buttons))
-app.add_handler(MessageHandler(filters.Regex("оплатил") & ~filters.COMMAND, payment_message_handler))
-app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_buttons))
+app.add_handler(CallbackQueryHandler(confirm_handler))
 # ======== ГОТОВО! ========
 app.run_polling(allowed_updates=Update.ALL_TYPES)
