@@ -104,6 +104,15 @@ def activate_subscription(user_id, days):
 # ======== КЛАВИАТУРА ========
 def get_main_keyboard():
     keyboard = [
+         keyboard = [
+        [KeyboardButton("📖 Создать сказку")],
+        [KeyboardButton("🎲 Удиви меня")],
+        [KeyboardButton("📚 Мои сказки")],
+        [KeyboardButton("❤️ Поддержать автора")],
+        [KeyboardButton("❓ Помощь")],
+        [KeyboardButton("📢 Наш канал")],  # Новая кнопка
+    ]
+    return ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
         [KeyboardButton("📖 Создать сказку")],
         [KeyboardButton("🎲 Удиви меня")],
         [KeyboardButton("📚 Мои сказки")],
@@ -280,10 +289,17 @@ async def handle_buttons(update, context):
         await payment_message_handler(update, context)
     else:
         await update.message.reply_text("Напиши /start.", reply_markup=get_main_keyboard())
-
+elif text == "📢 Наш канал":
+    await open_channel(update, context)
 # ======== ДИАЛОГ ========
 NAME, TOPIC, MORAL, LANGUAGE, TRAIT, VOICE = range(6)
-
+async def open_channel(update, context):
+    await update.message.reply_text(
+        "📢 Подписывайтесь на наш канал! Там мы публикуем лучшие сказки:",
+        reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton("📢 Открыть канал", url="https://t.me/твой_username_канала")]
+        ])
+    )
 async def story_start(update, context):
     user_id = update.effective_user.id
     if not can_create_story(user_id):
