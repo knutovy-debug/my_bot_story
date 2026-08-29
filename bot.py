@@ -21,7 +21,6 @@ CARD_NUMBER = "2202208186522703"
 DONATE_LINK = "2202208186522703"
 MONTHLY_PRICE = "299 рублей"
 YEARLY_PRICE = "1990 рублей"
-ADMIN_ID = "8434163956"  # <--- ВСТАВЬ СВОЙ ID СЮДА
 
 # ======== ИНИЦИАЛИЗАЦИЯ DEEPSEEK ========
 client = OpenAI(
@@ -213,7 +212,7 @@ async def handle_payment_message(update, context):
                 await update.message.reply_text("📩 Заявка отправлена! Ожидайте подтверждения оплаты от администратора.", reply_markup=get_main_keyboard())
                 # ОПОВЕЩЕНИЕ ДЛЯ ТЕБЯ (АДМИНА)
                 await context.bot.send_message(
-                    chat_id=ADMIN_ID,
+                    chat_id=update.effective_user.id,
                     text=f"💳 НОВАЯ ЗАЯВКА НА ОПЛАТУ!\n\n"
                          f"👤 Пользователь: {user_id}\n"
                          f"📅 Тариф: Месяц (299 руб.)\n"
@@ -227,7 +226,7 @@ async def handle_payment_message(update, context):
                 await update.message.reply_text("📩 Заявка отправлена! Ожидайте подтверждения оплаты от администратора.", reply_markup=get_main_keyboard())
                 # ОПОВЕЩЕНИЕ ДЛЯ ТЕБЯ (АДМИНА)
                 await context.bot.send_message(
-                    chat_id=ADMIN_ID,
+                    chat_id=update.effective_user.id,
                     text=f"💳 НОВАЯ ЗАЯВКА НА ОПЛАТУ!\n\n"
                          f"👤 Пользователь: {user_id}\n"
                          f"📅 Тариф: Год (1990 руб.)\n"
