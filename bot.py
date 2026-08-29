@@ -123,6 +123,12 @@ def get_payment_keyboard():
     ]
     return InlineKeyboardMarkup(keyboard)
 
+def get_admin_keyboard(user_id):
+    keyboard = [
+        [InlineKeyboardButton("✅ Подтвердить оплату", callback_data=f"confirm_{user_id}")],
+    ]
+    return InlineKeyboardMarkup(keyboard)
+
 def get_topic_keyboard():
     return ReplyKeyboardMarkup([
         ["🚀 Космос"],
@@ -218,7 +224,9 @@ async def handle_payment_message(update, context):
                     text=f"💳 НОВАЯ ЗАЯВКА НА ОПЛАТУ!\n\n"
                          f"👤 Пользователь: {user_id}\n"
                          f"📅 Тариф: Месяц (299 руб.)\n"
-                         f"Статус: Ожидает подтверждения"
+                         f"Статус: Ожидает подтверждения\n\n"
+                         f"👆 Нажмите кнопку ниже для подтверждения",
+                    reply_markup=get_admin_keyboard(user_id)
                 )
             elif plan == "year":
                 db["payment_requests"][str(user_id)] = {"plan": "year", "status": "pending"}
@@ -230,7 +238,9 @@ async def handle_payment_message(update, context):
                     text=f"💳 НОВАЯ ЗАЯВКА НА ОПЛАТУ!\n\n"
                          f"👤 Пользователь: {user_id}\n"
                          f"📅 Тариф: Год (1990 руб.)\n"
-                         f"Статус: Ожидает подтверждения"
+                         f"Статус: Ожидает подтверждения\n\n"
+                         f"👆 Нажмите кнопку ниже для подтверждения",
+                    reply_markup=get_admin_keyboard(user_id)
                 )
         else:
             await update.message.reply_text("⚠️ Вы ещё не выбрали тариф. Нажмите «Создать сказку», чтобы увидеть тарифы.", reply_markup=get_main_keyboard())
@@ -242,11 +252,14 @@ async def confirm_payment(update, context):
     if str(user_id) != ADMIN_ID:
         await update.message.reply_text("⛔ Только для администратора.")
         return
+
     if not context.args:
         await update.message.reply_text("⚠️ Использование: /confirm 123456789")
         return
+
     target_user_id = str(context.args[0])
     db = load_db()
+
     if target_user_id in db["payment_requests"]:
         plan = db["payment_requests"][target_user_id]["plan"]
         if plan == "month":
