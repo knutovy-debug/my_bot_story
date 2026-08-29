@@ -19,8 +19,6 @@ OPENAI_API_KEY = "sk-5172653204024fcaa7e26de04f04ec47"
 # ======== ОПЛАТА И РЕКВИЗИТЫ ========
 CARD_NUMBER = "2202208186522703"
 DONATE_LINK = "2202208186522703"
-MONTHLY_PRICE = "299 рублей"
-YEARLY_PRICE = "1990 рублей"
 ADMIN_ID = "1177629279"
 
 # ======== ИНИЦИАЛИЗАЦИЯ DEEPSEEK ========
@@ -114,6 +112,13 @@ def get_main_keyboard():
     ]
     return ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
 
+def get_payment_keyboard():
+    keyboard = [
+        [InlineKeyboardButton("💳 Оплатить месяц (299 руб.)", callback_data="month_99")],
+        [InlineKeyboardButton("💳 Оплатить год (1990 руб.)", callback_data="year_1990")],
+    ]
+    return InlineKeyboardMarkup(keyboard)
+
 def get_topic_keyboard():
     return ReplyKeyboardMarkup([
         ["🚀 Космос"],
@@ -195,7 +200,7 @@ async def payment_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     if data == "month_99":
-        price, period = "99 ₽", "1 месяц"
+        price, period = "299 ₽", "1 месяц"
     else:
         price, period = "1990 ₽", "1 год"
 
@@ -287,7 +292,8 @@ async def story_start(update, context):
         await update.message.reply_text(
             f"⚠️ Вы использовали все 3 бесплатные сказки.\n\n"
             f"💳 Чтобы продолжить, оплатите подписку:\n"
-            f"Можно выбрать: {MONTHLY_PRICE} / месяц или {YEARLY_PRICE} / год\n"
+            f"Цена: 299 руб. / месяц\n"
+            f"Цена: 1990 руб. / год\n"
             f"Карта: `{CARD_NUMBER}`\n\n"
             f"Выберите тариф ниже и напишите «Оплатил»!",
             parse_mode="Markdown",
@@ -308,7 +314,8 @@ async def random_story(update, context):
         await update.message.reply_text(
             f"⚠️ Вы использовали все 3 бесплатные сказки.\n\n"
             f"💳 Чтобы продолжить, оплатите подписку:\n"
-            f"Можно выбрать: {MONTHLY_PRICE} / месяц или {YEARLY_PRICE} / год\n"
+            f"Цена: 299 руб. / месяц\n"
+            f"Цена: 1990 руб. / год\n"
             f"Карта: `{CARD_NUMBER}`\n\n"
             f"Выберите тариф ниже и напишите «Оплатил»!",
             parse_mode="Markdown",
