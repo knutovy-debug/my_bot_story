@@ -85,6 +85,13 @@ def get_user_story_count(user_id):
             count += 1
     return count
 
+def increment_daily_count(user_id):
+    db = load_db()
+    if str(user_id) not in db["user_stats"]:
+        db["user_stats"][str(user_id)] = {"daily_count": 0, "last_reset": date.today().isoformat()}
+    db["user_stats"][str(user_id)]["daily_count"] += 1
+    save_db(db)
+
 def can_create_story(user_id):
     if is_premium(user_id):
         return True
@@ -106,13 +113,6 @@ def get_main_keyboard():
         [KeyboardButton("❓ Помощь")],
     ]
     return ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
-
-def get_payment_keyboard():
-    keyboard = [
-        [InlineKeyboardButton("💳 Оплатить месяц (299 руб.)", callback_data="month_99")],
-        [InlineKeyboardButton("💳 Оплатить год (1990 руб.)", callback_data="year_1990")],
-    ]
-    return InlineKeyboardMarkup(keyboard)
 
 def get_topic_keyboard():
     return ReplyKeyboardMarkup([
