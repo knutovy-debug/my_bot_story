@@ -23,7 +23,7 @@ MONTHLY_PRICE = "299 рублей"
 YEARLY_PRICE = "1990 рублей"
 
 # Твой личный Telegram ID
-ADMIN_ID = "8434163956"
+ADMIN_ID = "1177629279"
 
 # ======== ИНИЦИАЛИЗАЦИЯ DEEPSEEK ========
 client = OpenAI(
