@@ -112,12 +112,14 @@ def get_main_keyboard():
         [KeyboardButton("❓ Помощь")],
         [KeyboardButton("📢 Наш канал")],  # Новая кнопка
     ]
-    return ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+   def get_main_keyboard():
+    keyboard = [
         [KeyboardButton("📖 Создать сказку")],
         [KeyboardButton("🎲 Удиви меня")],
         [KeyboardButton("📚 Мои сказки")],
         [KeyboardButton("❤️ Поддержать автора")],
         [KeyboardButton("❓ Помощь")],
+        [KeyboardButton("📢 Наш канал")],  # Новая кнопка
     ]
     return ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
 
