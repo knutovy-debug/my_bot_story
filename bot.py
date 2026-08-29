@@ -22,7 +22,7 @@ DONATE_LINK = "2202208186522703"
 MONTHLY_PRICE = "299 рублей"
 YEARLY_PRICE = "1990 рублей"
 # Твой личный ID (от @userinfobot)
-ADMIN_ID = "1177629279"
+ADMIN_ID = "8434163956"
 
 # ======== ИНИЦИАЛИЗАЦИЯ DEEPSEEK ========
 client = OpenAI(
