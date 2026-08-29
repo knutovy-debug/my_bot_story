@@ -90,7 +90,7 @@ def increment_daily_count(user_id):
         db["user_stats"][str(user_id)] = {"daily_count": 0, "last_reset": date.today().isoformat()}
     db["user_stats"][str(user_id)]["daily_count"] += 1
     save_db(db)
-    def get_user_story_count(user_id):
+def get_user_story_count(user_id):
     db = load_db()
     count = 0
     for s in db["stories"]:
