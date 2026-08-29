@@ -109,7 +109,8 @@ def get_main_keyboard():
         [KeyboardButton("📚 Мои сказки")],
         [KeyboardButton("❤️ Поддержать автора")],
         [KeyboardButton("❓ Помощь")],
-        [KeyboardButton("📢 Наш канал")],]
+        [KeyboardButton("📢 Наш канал")],
+    ]
     return ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
 
 def get_payment_keyboard():
@@ -444,7 +445,7 @@ async def story_voice(update, context):
         response = client.chat.completions.create(
             model="deepseek-chat",
             messages=[{"role": "user", "content": prompt}],
-            max_tokens=800,
+            max_tokens=1500,
             temperature=0.7
         )
         story_text = response.choices[0].message.content.strip()
