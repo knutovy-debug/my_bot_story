@@ -171,7 +171,13 @@ async def edge_tts_speak(text, voice="ru-RU-SvetlanaNeural"):
     except Exception as e:
         print(f"Edge TTS ошибка: {e}")
         return None
-
+async def share_bot(update, context):
+    await update.message.reply_text(
+        "🎁 Поделись ботом с друзьями! Отправь им ссылку:",
+        reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton("📤 Отправить друзьям", switch_inline_query="")]
+        ])
+    )
 # ======== ОБРАБОТЧИКИ КОМАНД ========
 async def start(update, context):
     await update.message.reply_text("✨ Привет! Я бот для аудиосказок!", reply_markup=get_main_keyboard())
@@ -330,7 +336,6 @@ async def confirm_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # ======== ОБРАБОТЧИК КНОПОК ========
 async def handle_buttons(update, context):
     text = update.message.text
-    
     if text == "📖 Создать сказку":
         await story_start(update, context)
     elif text == "🎲 Удиви меня":
@@ -341,8 +346,8 @@ async def handle_buttons(update, context):
         await donate(update, context)
     elif text == "❓ Помощь":
         await help_command(update, context)
-    elif "оплатил" in text.lower():
-        await payment_message_handler(update, context)
+    elif text == "📤 Поделиться с друзьями":
+        await share_bot(update, context)
     else:
         await update.message.reply_text("Напиши /start.", reply_markup=get_main_keyboard())
 
