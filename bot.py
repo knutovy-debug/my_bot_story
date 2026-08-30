@@ -13,13 +13,13 @@ from telegram import Update, ReplyKeyboardMarkup, KeyboardButton, InlineKeyboard
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ConversationHandler, ContextTypes, CallbackQueryHandler
 
 # ======== ТОКЕНЫ ========
-TELEGRAM_BOT_TOKEN = "8434163956:AAGlP2uk4zpAmLFGpTh8XtL5AWNJyiemgEE"
-OPENAI_API_KEY = "sk-132ee0cd4cf14c10b389b7680cfcfe37"
+TELEGRAM_BOT_TOKEN = "8434163956:AAFsId_CNRX2rkCBH4_gsIrWxa99k1ohUsA"
+OPENAI_API_KEY = "sk-5172653204024fcaa7e26de04f04ec47"
 
 # ======== ОПЛАТА И РЕКВИЗИТЫ ========
 CARD_NUMBER = "2202208186522703"
 DONATE_LINK = "2202208186522703"
-ADMIN_ID = "8434163956"
+ADMIN_ID = "1177629279"
 
 # ======== ИНИЦИАЛИЗАЦИЯ DEEPSEEK ========
 client = OpenAI(
@@ -195,6 +195,7 @@ async def payment_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
     user_id = update.effective_user.id
     data = query.data
+
     if data.startswith("confirm_") or data.startswith("reject_"):
         return
 
@@ -274,9 +275,6 @@ async def handle_buttons(update, context):
         await donate(update, context)
     elif text == "❓ Помощь":
         await help_command(update, context)
-    # ВАЖНО: Если текст "Оплатил" - отправляем его в обработчик оплаты
-    elif "оплатил" in text.lower():
-        await payment_message_handler(update, context)
     else:
         await update.message.reply_text("Напиши /start.", reply_markup=get_main_keyboard())
 
@@ -342,7 +340,7 @@ async def random_story(update, context):
         response = client.chat.completions.create(
             model="deepseek-chat",
             messages=[{"role": "user", "content": prompt}],
-            max_tokens=2000,
+            max_tokens=800,
             temperature=0.7
         )
         story_text = response.choices[0].message.content.strip()
@@ -445,7 +443,7 @@ async def story_voice(update, context):
         response = client.chat.completions.create(
             model="deepseek-chat",
             messages=[{"role": "user", "content": prompt}],
-            max_tokens=2000,
+            max_tokens=800,
             temperature=0.7
         )
         story_text = response.choices[0].message.content.strip()
@@ -498,7 +496,11 @@ conv = ConversationHandler(
 )
 app.add_handler(conv)
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_buttons))
-app.add_handler(CallbackQueryHandler(confirm_handler))
-
-# ======== ГОТОВО! ========
-app.run_polling(allowed_updates=Update.ALL_TYPES)
+app.add_handler(CallbackQueryHandler(payment_handler))
+app.add_handler(conv)
+# ВАЖНО: Сначала ловим "Оплатил", потом всё остальное
+app.add_handler(MessageHandler(filters.Regex("оплатил") & ~filters.COMMAND, payment_message_handler))
+app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_buttons))
+# Сначала ловим нажатие кнопки оплаты, потом подтверждение
+app.add_handler(CallbackQueryHandler(payment_handler))
+app.add_handler(CallbackQueryHandler(confirm_handler)
