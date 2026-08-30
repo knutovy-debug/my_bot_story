@@ -14,7 +14,7 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters, C
 
 # ======== ТОКЕНЫ ========
 TELEGRAM_BOT_TOKEN = "8434163956:AAE_V2vlsu8Pvt1u2gz1BSfSeVXsPViQxgE"
-OPENAI_API_KEY = "sk-132ee0dcf14c10b389b7680cfc7e37"
+OPENAI_API_KEY = "sk-10ce096c5fa748808b375c729610e6f3"
 
 # ======== ОПЛАТА И РЕКВИЗИТЫ ========
 CARD_NUMBER = "2202208186522703"
