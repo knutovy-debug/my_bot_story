@@ -162,7 +162,7 @@ CHARACTER_TRAITS = ["Смелый", "Добрый", "Любопытный", "В�
 
 async def edge_tts_speak(text, voice="ru-RU-SvetlanaNeural"):
     try:
-        communicate = edge_tts.Communicate(text, voice, rate="+5%")
+        communicate = edge_tts.Communicate(text, voice, rate="-15%")
         audio_data = b""
         async for chunk in communicate.stream():
             if chunk["type"] == "audio":
@@ -497,6 +497,7 @@ conv = ConversationHandler(
 app.add_handler(conv)
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_buttons))
 app.add_handler(CallbackQueryHandler(payment_handler))
+app.add_handler(CallbackQueryHandler(confirm_handler))
 
 # ======== ГОТОВО! ========
 app.run_polling(allowed_updates=Update.ALL_TYPES)
