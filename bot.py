@@ -14,7 +14,7 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters, C
 
 # ======== ТОКЕНЫ ========
 TELEGRAM_BOT_TOKEN = "8434163956:AAGlP2uk4zpAmLFGpTh8XtL5AWNJyiemgEE"
-OPENAI_API_KEY = "sk-132ee0cd4cf14c10b389b7680cfcfe37"
+OPENAI_API_KEY = "sk-5172653204024fcaa7e26de04f04ec47"
 
 # ======== ОПЛАТА И РЕКВИЗИТЫ ========
 CARD_NUMBER = "2202208186522703"
@@ -109,7 +109,6 @@ def get_main_keyboard():
         [KeyboardButton("📚 Мои сказки")],
         [KeyboardButton("❤️ Поддержать автора")],
         [KeyboardButton("❓ Помощь")],
-        [KeyboardButton("📢 Наш канал")],
     ]
     return ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
 
@@ -180,13 +179,6 @@ async def help_command(update, context):
     await update.message.reply_text("Нажми /start и выбери «Создать сказку».", reply_markup=get_main_keyboard())
 async def donate(update, context):
     await update.message.reply_text(f"❤️ Спасибо! Карта: {CARD_NUMBER}\nСсылка: {DONATE_LINK}", parse_mode="Markdown", reply_markup=get_main_keyboard())
-async def open_channel(update, context):
-    await update.message.reply_text(
-        "📢 Подписывайтесь на наш канал!",
-        reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton("📢 Открыть канал", url="https://t.me/твой_username_канала")]
-        ])
-    )
 async def my_stories(update, context):
     user_id = update.effective_user.id
     stories = get_user_stories(user_id)
@@ -273,9 +265,7 @@ async def confirm_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # ======== ОБРАБОТЧИК КНОПОК ========
 async def handle_buttons(update, context):
     text = update.message.text
-    if "оплатил" in text.lower():
-        await payment_message_handler(update, context)
-    elif text == "📖 Создать сказку":
+    if text == "📖 Создать сказку":
         await story_start(update, context)
     elif text == "🎲 Удиви меня":
         await random_story(update, context)
@@ -285,8 +275,6 @@ async def handle_buttons(update, context):
         await donate(update, context)
     elif text == "❓ Помощь":
         await help_command(update, context)
-    elif text == "📢 Наш канал":
-        await open_channel(update, context)
     else:
         await update.message.reply_text("Напиши /start.", reply_markup=get_main_keyboard())
 
@@ -352,7 +340,7 @@ async def random_story(update, context):
         response = client.chat.completions.create(
             model="deepseek-chat",
             messages=[{"role": "user", "content": prompt}],
-            max_tokens=2000,
+            max_tokens=800,
             temperature=0.7
         )
         story_text = response.choices[0].message.content.strip()
@@ -455,7 +443,7 @@ async def story_voice(update, context):
         response = client.chat.completions.create(
             model="deepseek-chat",
             messages=[{"role": "user", "content": prompt}],
-            max_tokens=2000,
+            max_tokens=800,
             temperature=0.7
         )
         story_text = response.choices[0].message.content.strip()
