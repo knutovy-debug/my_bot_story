@@ -489,8 +489,16 @@ conv = ConversationHandler(
 )
 app.add_handler(conv)
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_buttons))
-app.add_handler(CallbackQueryHandler(payment_handler))
-app.add_handler(CallbackQueryHandler(confirm_handler))
+app.add_handler(CallbackQueryHandler(callback_handler))
 
-# ======== ГОТОВО! ========
+async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    data = query.data
+
+    # Если это кнопка подтверждения или отклонения — идём в confirm_handler
+    if data.startswith("confirm_") or data.startswith("reject_"):
+        await confirm_handler(update, context)
+    # Иначе (кнопки оплаты) — идём в payment_handler
+    else:
+        await payment_handler(update, context)
 app.run_polling(allowed_updates=Update.ALL_TYPES)
