@@ -195,7 +195,6 @@ async def payment_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
     user_id = update.effective_user.id
     data = query.data
-
     if data.startswith("confirm_") or data.startswith("reject_"):
         return
 
