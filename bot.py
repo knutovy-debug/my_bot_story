@@ -14,7 +14,7 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters, C
 
 # ======== ТОКЕНЫ ========
 TELEGRAM_BOT_TOKEN = "8434163956:AAGlP2uk4zpAmLFGpTh8XtL5AWNJyiemgEE"
-OPENAI_API_KEY = "sk-5172653204024fcaa7e26de04f04ec47"
+OPENAI_API_KEY = "sk-132ee0cd4cf14c10b389b7680cfcfe37"
 
 # ======== ОПЛАТА И РЕКВИЗИТЫ ========
 CARD_NUMBER = "2202208186522703"
@@ -265,7 +265,9 @@ async def confirm_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # ======== ОБРАБОТЧИК КНОПОК ========
 async def handle_buttons(update, context):
     text = update.message.text
-    if text == "📖 Создать сказку":
+    if "оплатил" in text.lower():
+        await payment_message_handler(update, context)
+    elif text == "📖 Создать сказку":
         await story_start(update, context)
     elif text == "🎲 Удиви меня":
         await random_story(update, context)
@@ -340,7 +342,7 @@ async def random_story(update, context):
         response = client.chat.completions.create(
             model="deepseek-chat",
             messages=[{"role": "user", "content": prompt}],
-            max_tokens=800,
+            max_tokens=2000,
             temperature=0.7
         )
         story_text = response.choices[0].message.content.strip()
@@ -443,7 +445,7 @@ async def story_voice(update, context):
         response = client.chat.completions.create(
             model="deepseek-chat",
             messages=[{"role": "user", "content": prompt}],
-            max_tokens=800,
+            max_tokens=2000,
             temperature=0.7
         )
         story_text = response.choices[0].message.content.strip()
