@@ -14,7 +14,7 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters, C
 
 # ======== ТОКЕНЫ ========
 TELEGRAM_BOT_TOKEN = "8434163956:AAE_V2vlsu8Pvt1u2gz1BSfSeVXsPViQxgE"
-OPENAI_API_KEY = "sk-132ee0cd4cf14c10b389b7680cfcfe37"
+OPENAI_API_KEY = "sk-132ee0dcf14c10b389b7680cfc7e37"
 
 # ======== ОПЛАТА И РЕКВИЗИТЫ ========
 CARD_NUMBER = "2202208186522703"
@@ -225,18 +225,7 @@ async def payment_message_handler(update: Update, context: ContextTypes.DEFAULT_
         db = load_db()
         payment_info = db["payment_data"].get(str(user_id), {"price": "Неизвестно", "period": "Неизвестно"})
 
-        await context.bot.send_message(
-            chat_id=ADMIN_ID,
-            text=f"💳 Новый запрос на оплату!\n"
-                 f"Пользователь: {user_id} (@{update.effective_user.username})\n"
-                 f"Тариф: {payment_info['period']} за {payment_info['price']}\n"
-                 f"Пожалуйста, проверьте перевод и нажмите кнопку",
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("✅ Подтвердить", callback_data=f"confirm_{user_id}")],
-                [InlineKeyboardButton("❌ Отклонить", callback_data=f"reject_{user_id}")]
-            ])
-        )
-        await update.message.reply_text("Спасибо! Ваш запрос отправлен администратору на подтверждение.")
+        await update.message.reply_text("📩 Заявка на оплату отправлена. Ожидайте подтверждения администратора!")
 
     else:
         await update.message.reply_text("Сначала выберите тариф, нажав «Создать сказку».")
