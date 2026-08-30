@@ -252,6 +252,25 @@ async def confirm_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await context.bot.send_message(chat_id=target_user, text="❌ Оплата отклонена. Попробуйте еще раз.")
 
 # ======== ОБРАБОТЧИК КНОПОК ========
+async def confirm_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    user_id = update.effective_user.id
+
+    if str(user_id) != ADMIN_ID:
+        await query.answer("Только для администратора!", show_alert=True)
+        return
+
+    data = query.data
+    target_user = data.split("_")[1]
+
+    if data.startswith("confirm_"):
+        activate_subscription(int(target_user), 30)
+        await query.edit_message_text(f"✅ Подписка для пользователя {target_user} активирована!")
+        await context.bot.send_message(chat_id=target_user, text="✅ Оплата подтверждена! Теперь у вас безлимит на 1 месяц!")
+    elif data.startswith("reject_"):
+        await query.edit_message_text(f"❌ Оплата от пользователя {target_user} отклонена!")
+        await context.bot.send_message(chat_id=target_user, text="❌ Оплата отклонена. Попробуйте еще раз.")
 async def handle_buttons(update, context):
     text = update.message.text
     if text == "📖 Создать сказку":
