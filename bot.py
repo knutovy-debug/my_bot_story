@@ -337,7 +337,6 @@ async def share_bot(update, context):
 # ======== ОБРАБОТЧИК КНОПОК ========
 async def handle_buttons(update, context):
     text = update.message.text
-    
     if text == "📖 Создать сказку":
         await story_start(update, context)
     elif text == "🎲 Удиви меня":
@@ -346,13 +345,14 @@ async def handle_buttons(update, context):
         await my_stories(update, context)
     elif text == "❤️ Поддержать автора":
         await donate(update, context)
+    elif text == "📤 Поделиться с друзьями":
+        await share_bot(update, context)
     elif text == "❓ Помощь":
         await help_command(update, context)
     elif "оплатил" in text.lower():
         await payment_message_handler(update, context)
     else:
         await update.message.reply_text("Напиши /start.", reply_markup=get_main_keyboard())
-
 # ======== ДИАЛОГ ========
 NAME, TOPIC, MORAL, LANGUAGE, TRAIT, VOICE = range(6)
 
