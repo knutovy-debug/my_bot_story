@@ -225,7 +225,18 @@ async def payment_message_handler(update: Update, context: ContextTypes.DEFAULT_
         db = load_db()
         payment_info = db["payment_data"].get(str(user_id), {"price": "Неизвестно", "period": "Неизвестно"})
 
-        await update.message.reply_text("📩 Заявка на оплату отправлена. Ожидайте подтверждения администратора!")
+        await context.bot.send_message(
+            chat_id=ADMIN_ID,
+            text=f"💳 Новый запрос на оплату!\n"
+                 f"Пользователь: {user_id} (@{update.effective_user.username})\n"
+                 f"Тариф: {payment_info['period']} за {payment_info['price']}\n"
+                 f"Пожалуйста, проверьте перевод и нажмите кнопку",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("✅ Подтвердить", callback_data=f"confirm_{user_id}")],
+                [InlineKeyboardButton("❌ Отклонить", callback_data=f"reject_{user_id}")]
+            ])
+        )
+        await update.message.reply_text("Спасибо! Ваш запрос отправлен администратору на подтверждение.")
 
     else:
         await update.message.reply_text("Сначала выберите тариф, нажав «Создать сказку».")
@@ -252,25 +263,6 @@ async def confirm_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await context.bot.send_message(chat_id=target_user, text="❌ Оплата отклонена. Попробуйте еще раз.")
 
 # ======== ОБРАБОТЧИК КНОПОК ========
-async def confirm_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-    user_id = update.effective_user.id
-
-    if str(user_id) != ADMIN_ID:
-        await query.answer("Только для администратора!", show_alert=True)
-        return
-
-    data = query.data
-    target_user = data.split("_")[1]
-
-    if data.startswith("confirm_"):
-        activate_subscription(int(target_user), 30)
-        await query.edit_message_text(f"✅ Подписка для пользователя {target_user} активирована!")
-        await context.bot.send_message(chat_id=target_user, text="✅ Оплата подтверждена! Теперь у вас безлимит на 1 месяц!")
-    elif data.startswith("reject_"):
-        await query.edit_message_text(f"❌ Оплата от пользователя {target_user} отклонена!")
-        await context.bot.send_message(chat_id=target_user, text="❌ Оплата отклонена. Попробуйте еще раз.")
 async def handle_buttons(update, context):
     text = update.message.text
     if text == "📖 Создать сказку":
@@ -505,7 +497,7 @@ conv = ConversationHandler(
     fallbacks=[CommandHandler("cancel", cancel)]
 )
 app.add_handler(conv)
-app.add_handler(MessageHandler(filters.Regex("оплатил") & ~filters.COMMAND, payment_message_handler))
+app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_buttons))
 app.add_handler(CallbackQueryHandler(payment_handler))
 app.add_handler(CallbackQueryHandler(confirm_handler))
 
