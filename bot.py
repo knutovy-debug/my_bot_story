@@ -257,10 +257,8 @@ async def confirm_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if data.startswith("confirm_"):
         activate_subscription(int(target_user), 30)
         await query.edit_message_text(f"✅ Подписка для пользователя {target_user} активирована!")
-        await context.bot.send_message(chat_id=target_user, text="✅ Оплата подтверждена! Теперь у вас безлимит на 1 месяц!")
     elif data.startswith("reject_"):
         await query.edit_message_text(f"❌ Оплата от пользователя {target_user} отклонена!")
-        await context.bot.send_message(chat_id=target_user, text="❌ Оплата отклонена. Попробуйте еще раз.")
 
 # ======== ОБРАБОТЧИК КНОПОК ========
 async def handle_buttons(update, context):
@@ -275,7 +273,6 @@ async def handle_buttons(update, context):
         await donate(update, context)
     elif text == "❓ Помощь":
         await help_command(update, context)
-    # ВАЖНО: Если текст "Оплатил" - отправляем его в обработчик оплаты
     elif "оплатил" in text.lower():
         await payment_message_handler(update, context)
     else:
@@ -499,9 +496,6 @@ conv = ConversationHandler(
 )
 app.add_handler(conv)
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_buttons))
-app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, payment_message_handler))
-app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_buttons))
-app.add_handler(CallbackQueryHandler(payment_handler))
 app.add_handler(CallbackQueryHandler(confirm_handler))
 
 # ======== ГОТОВО! ========
