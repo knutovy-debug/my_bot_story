@@ -397,9 +397,11 @@ async def story_moral(update, context):
     chosen = update.message.text
     moral = chosen.replace("💛 ", "").replace("🏆 ", "").replace("🤝 ", "").replace("🔍 ", "").replace("🏡 ", "").replace("🔬 ", "").replace("🎭 ", "")
     context.user_data['moral'] = moral
-    await update.message.reply_text("🌐 Выбери язык:", reply_markup=get_language_keyboard())
-    return LANGUAGE
-
+    # Русский язык ставим автоматически
+    context.user_data['language'] = "ru"
+    await update.message.reply_text("🎭 Выбери характер героя:", reply_markup=get_trait_keyboard())
+    return TRAIT
+    
 async def story_language(update, context):
     chosen = update.message.text
     language_code = None
@@ -504,7 +506,6 @@ conv = ConversationHandler(
         NAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, story_name)],
         TOPIC: [MessageHandler(filters.TEXT & ~filters.COMMAND, story_topic)],
         MORAL: [MessageHandler(filters.TEXT & ~filters.COMMAND, story_moral)],
-        LANGUAGE: [MessageHandler(filters.TEXT & ~filters.COMMAND, story_language)],
         TRAIT: [MessageHandler(filters.TEXT & ~filters.COMMAND, story_trait)],
         VOICE: [MessageHandler(filters.TEXT & ~filters.COMMAND, story_voice)],
     },
