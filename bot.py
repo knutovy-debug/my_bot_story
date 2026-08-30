@@ -108,10 +108,11 @@ def get_main_keyboard():
         [KeyboardButton("🎲 Удиви меня")],
         [KeyboardButton("📚 Мои сказки")],
         [KeyboardButton("❤️ Поддержать автора")],
+        [KeyboardButton("📤 Поделиться с друзьями")],
         [KeyboardButton("❓ Помощь")],
     ]
     return ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
-
+    
 def get_payment_keyboard():
     keyboard = [
         [InlineKeyboardButton("💳 Оплатить месяц (299 руб.)", callback_data="month_299")],
@@ -326,7 +327,13 @@ async def confirm_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
         except Exception as e:
             print(f"Не удалось отправить уведомление пользователю: {e}")
-
+async def share_bot(update, context):
+    await update.message.reply_text(
+        "🎁 Поделись ботом с друзьями! Отправь им ссылку:",
+        reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton("📤 Отправить друзьям", switch_inline_query="")]
+        ])
+    )
 # ======== ОБРАБОТЧИК КНОПОК ========
 async def handle_buttons(update, context):
     text = update.message.text
