@@ -13,13 +13,13 @@ from telegram import Update, ReplyKeyboardMarkup, KeyboardButton, InlineKeyboard
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ConversationHandler, ContextTypes, CallbackQueryHandler
 
 # ======== ТОКЕНЫ ========
-TELEGRAM_BOT_TOKEN = "8434163956:AAFsId_CNRX2rkCBH4_gsIrWxa99k1ohUsA"
-OPENAI_API_KEY = "sk-5172653204024fcaa7e26de04f04ec47"
+TELEGRAM_BOT_TOKEN = "8434163956:AAGlP2uk4zpAmLFGpTh8XtL5AWNJyiemgEE"
+OPENAI_API_KEY = "sk-132ee0cd4cf14c10b389b7680cfcfe37"
 
 # ======== ОПЛАТА И РЕКВИЗИТЫ ========
 CARD_NUMBER = "2202208186522703"
 DONATE_LINK = "2202208186522703"
-ADMIN_ID = "1177629279"
+ADMIN_ID = "8434163956"
 
 # ======== ИНИЦИАЛИЗАЦИЯ DEEPSEEK ========
 client = OpenAI(
@@ -498,9 +498,9 @@ app.add_handler(conv)
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_buttons))
 app.add_handler(CallbackQueryHandler(payment_handler))
 app.add_handler(conv)
-# ВАЖНО: Сначала ловим "Оплатил", потом всё остальное
-app.add_handler(MessageHandler(filters.Regex("оплатил") & ~filters.COMMAND, payment_message_handler))
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_buttons))
-# Сначала ловим нажатие кнопки оплаты, потом подтверждение
-app.add_handler(CallbackQueryHandler(payment_handler))
-app.add_handler(CallbackQueryHandler(confirm_handler)
+app.add_handler(MessageHandler(filters.Regex("оплатил") & ~filters.COMMAND, payment_message_handler))
+app.add_handler(CallbackQueryHandler(confirm_handler))
+
+# ======== ГОТОВО! ========
+app.run_polling(allowed_updates=Update.ALL_TYPES)
