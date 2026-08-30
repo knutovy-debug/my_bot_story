@@ -13,13 +13,13 @@ from telegram import Update, ReplyKeyboardMarkup, KeyboardButton, InlineKeyboard
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ConversationHandler, ContextTypes, CallbackQueryHandler
 
 # ======== ТОКЕНЫ ========
-TELEGRAM_BOT_TOKEN = "8434163956:AAE_V2vlsu8Pvt1u2gz1BSfSeVXsPViQxgE"
-OPENAI_API_KEY = "sk-132ee0cd4cf14c10b389b7680cfcfe37"
+TELEGRAM_BOT_TOKEN = "8434163956:AAFsId_CNRX2rkCBH4_gsIrWxa99k1ohUsA"
+OPENAI_API_KEY = "sk-5172653204024fcaa7e26de04f04ec47"
 
 # ======== ОПЛАТА И РЕКВИЗИТЫ ========
 CARD_NUMBER = "2202208186522703"
 DONATE_LINK = "2202208186522703"
-ADMIN_ID = "8434163956"
+ADMIN_ID = "1177629279"
 
 # ======== ИНИЦИАЛИЗАЦИЯ DEEPSEEK ========
 client = OpenAI(
@@ -257,8 +257,10 @@ async def confirm_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if data.startswith("confirm_"):
         activate_subscription(int(target_user), 30)
         await query.edit_message_text(f"✅ Подписка для пользователя {target_user} активирована!")
+        await context.bot.send_message(chat_id=target_user, text="✅ Оплата подтверждена! Теперь у вас безлимит на 1 месяц!")
     elif data.startswith("reject_"):
         await query.edit_message_text(f"❌ Оплата от пользователя {target_user} отклонена!")
+        await context.bot.send_message(chat_id=target_user, text="❌ Оплата отклонена. Попробуйте еще раз.")
 
 # ======== ОБРАБОТЧИК КНОПОК ========
 async def handle_buttons(update, context):
@@ -273,8 +275,6 @@ async def handle_buttons(update, context):
         await donate(update, context)
     elif text == "❓ Помощь":
         await help_command(update, context)
-    elif "оплатил" in text.lower():
-        await payment_message_handler(update, context)
     else:
         await update.message.reply_text("Напиши /start.", reply_markup=get_main_keyboard())
 
@@ -496,7 +496,7 @@ conv = ConversationHandler(
 )
 app.add_handler(conv)
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_buttons))
-app.add_handler(MessageHandler(filters.Regex("оплатил") & ~filters.COMMAND, payment_message_handler))
+app.add_handler(CallbackQueryHandler(payment_handler))
 app.add_handler(CallbackQueryHandler(confirm_handler))
 
 # ======== ГОТОВО! ========
