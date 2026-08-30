@@ -265,9 +265,7 @@ async def confirm_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # ======== ОБРАБОТЧИК КНОПОК ========
 async def handle_buttons(update, context):
     text = update.message.text
-    if "оплатил" in text.lower():
-        await payment_message_handler(update, context)
-    elif text == "📖 Создать сказку":
+    if text == "📖 Создать сказку":
         await story_start(update, context)
     elif text == "🎲 Удиви меня":
         await random_story(update, context)
@@ -277,6 +275,9 @@ async def handle_buttons(update, context):
         await donate(update, context)
     elif text == "❓ Помощь":
         await help_command(update, context)
+    # ВАЖНО: Если текст "Оплатил" - отправляем его в обработчик оплаты
+    elif "оплатил" in text.lower():
+        await payment_message_handler(update, context)
     else:
         await update.message.reply_text("Напиши /start.", reply_markup=get_main_keyboard())
 
@@ -498,7 +499,6 @@ conv = ConversationHandler(
 )
 app.add_handler(conv)
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_buttons))
-app.add_handler(CallbackQueryHandler(payment_handler))
 app.add_handler(CallbackQueryHandler(confirm_handler))
 
 # ======== ГОТОВО! ========
