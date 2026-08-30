@@ -162,7 +162,7 @@ CHARACTER_TRAITS = ["Смелый", "Добрый", "Любопытный", "В�
 
 async def edge_tts_speak(text, voice="ru-RU-SvetlanaNeural"):
     try:
-        communicate = edge_tts.Communicate(text, voice, rate="+5%")
+        communicate = edge_tts.Communicate(text, voice, rate="-15%")
         audio_data = b""
         async for chunk in communicate.stream():
             if chunk["type"] == "audio":
@@ -445,7 +445,7 @@ async def story_voice(update, context):
         response = client.chat.completions.create(
             model="deepseek-chat",
             messages=[{"role": "user", "content": prompt}],
-            max_tokens=800,
+            max_tokens=1500,
             temperature=0.7
         )
         story_text = response.choices[0].message.content.strip()
