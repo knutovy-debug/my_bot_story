@@ -443,7 +443,7 @@ async def story_voice(update, context):
         response = client.chat.completions.create(
             model="deepseek-chat",
             messages=[{"role": "user", "content": prompt}],
-            max_tokens=800,
+            max_tokens=1500,
             temperature=0.7
         )
         story_text = response.choices[0].message.content.strip()
@@ -497,7 +497,6 @@ conv = ConversationHandler(
 app.add_handler(conv)
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_buttons))
 app.add_handler(CallbackQueryHandler(payment_handler))
-app.add_handler(CallbackQueryHandler(confirm_handler))
 
 # ======== ГОТОВО! ========
 app.run_polling(allowed_updates=Update.ALL_TYPES)
