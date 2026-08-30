@@ -13,7 +13,7 @@ from telegram import Update, ReplyKeyboardMarkup, KeyboardButton, InlineKeyboard
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ConversationHandler, ContextTypes, CallbackQueryHandler
 
 # ======== ТОКЕНЫ ========
-TELEGRAM_BOT_TOKEN = "8434163956:AAGlP2uk4zpAmLFGpTh8XtL5AWNJyiemgEE"
+TELEGRAM_BOT_TOKEN = "8434163956:AAE_V2vlsu8Pvt1u2gz1BSfSeVXsPViQxgE"
 OPENAI_API_KEY = "sk-132ee0cd4cf14c10b389b7680cfcfe37"
 
 # ======== ОПЛАТА И РЕКВИЗИТЫ ========
