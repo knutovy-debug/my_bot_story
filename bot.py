@@ -518,7 +518,7 @@ async def story_voice(update, context):
         response = client.chat.completions.create(
             model="deepseek-chat",
             messages=[{"role": "user", "content": prompt}],
-            max_tokens=1500,
+            max_tokens=400,
             temperature=0.7
         )
         story_text = response.choices[0].message.content.strip()
