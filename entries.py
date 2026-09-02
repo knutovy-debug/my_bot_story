@@ -12,12 +12,9 @@ import httpx
 
 router = APIRouter(prefix="/entries", tags=["entries"])
 
-# ==========================================
-# ТВОИ ДАННЫЕ (ПРОПИСАНЫ ПРЯМО В ФАЙЛЕ!)
-# ==========================================
+# ТВОИ ДАННЫЕ (прописаны в коде, Railway Variables не нужны)
 BOT_TOKEN = "8796483021:AAEBlUMP6e-2JWbfopilvA8fJB1fpZj0Pzw"
-ADMIN_ID = "8796483021"
-# ==========================================
+ADMIN_ID = "1177629279"
 
 def get_moscow_now():
     return datetime.now(timezone.utc) + timedelta(hours=3)
@@ -34,8 +31,7 @@ async def get_today_count(
             Entry.created_at >= start_of_day
         )
     )
-    count = result.scalar() or 0
-    return {"count": count}
+    return {"count": result.scalar() or 0}
 
 @router.get("/my")
 async def get_my_entries(
@@ -67,14 +63,15 @@ async def get_stats(
     entries = await get_my_entries(current_user, db)
     if not entries:
         return {"dates": [], "sentiments": [], "stress_levels": []}
-    
     return {
         "dates": [e["created_at"] for e in entries],
         "sentiments": [e["sentiment"] for e in entries],
         "stress_levels": [e["stress_level"] for e in entries]
     }
 
-# ВОТ ТУТ КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: РОУТЕР ДЛЯ СОЗДАНИЯ ЗАПИСИ
+# ==========================================
+# ЭНДПОИНТ СОЗДАНИЯ ЗАПИСИ (POST /api/v1/entries)
+# ==========================================
 @router.post("")
 async def create_entry(
     payload: dict,
@@ -85,6 +82,7 @@ async def create_entry(
     if not text:
         raise HTTPException(status_code=400, detail="Текст не может быть пустым")
 
+    # Лимит 3 записи в день
     if not current_user.is_subscribed:
         start_of_day = get_moscow_now().replace(hour=0, minute=0, second=0, microsecond=0)
         count_result = await db.execute(
@@ -97,7 +95,8 @@ async def create_entry(
 
         if today_count >= 3:
             raise HTTPException(status_code=403, detail="Бесплатный лимит исчерпан. Оплатите подписку.")
-    
+
+    # Анализ (DeepSeek или заглушка)
     try:
         analysis = analyze_entry(text)
     except Exception:
@@ -135,7 +134,7 @@ async def confirm_payment(
                 f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
                 json={
                     "chat_id": ADMIN_ID,
-                    "text": f"🛒 Пользователь @{current_user.username or 'None'} (ID: {current_user.id}) оплатил подписку.\n\nПроверьте перевод и подтвердите оплату:",
+                    "text": f"🛒 Пользователь @{current_user.username or 'None'} (ID: {current_user.id}) оплатил подписку. Проверьте перевод.",
                     "reply_markup": {
                         "inline_keyboard": [[
                             {"text": "✅ Подтвердить", "callback_data": f"confirm_{current_user.id}"},
@@ -145,11 +144,11 @@ async def confirm_payment(
                 }
             )
     except Exception as e:
-        print(f"Ошибка отправки в Telegram (Railway может блокировать): {e}")
-        
-    # ВАЖНО: Если хочешь, чтобы подписка активировалась ТОЛЬКО после твоего нажатия в Telegram, закомментируй эти 3 строчки ниже:
+        print(f"Ошибка Telegram: {e}")
+
+    # Активация подписки (для теста)
     current_user.is_subscribed = True
     current_user.subscription_expires = get_moscow_now() + timedelta(days=30)
     await db.commit()
-    
-    return {"status": "pending", "message": "Запрос на подтверждение отправлен. Подписка активирована для теста."}
+
+    return {"status": "pending", "message": "Запрос отправлен. Подписка активирована."}
